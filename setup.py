@@ -1,0 +1,33 @@
+from setuptools import setup, find_packages
+
+setup(
+    name="boatpark",
+    version="1.0.0",
+    packages=find_packages(),
+    install_requires=[
+        "Flask==2.3.3",
+        "Flask-SQLAlchemy==3.0.5",
+        "Flask-Login==0.6.3",
+        "Flask-Migrate==4.0.5",
+        "Flask-WTF==1.1.1",
+        "Flask-Mail==0.10.0",
+        "psycopg2-binary==2.9.10",
+        "SQLAlchemy==2.0.35",
+        "alembic==1.16.2",
+        "bcrypt==4.0.1",
+        "cryptography==41.0.7",
+        "email-validator==2.0.0",
+        "python-dotenv==1.0.0",
+        "requests==2.31.0",
+        "Pillow==10.0.1",
+        "reportlab==4.4.2",
+        "xlsxwriter==3.2.5",
+        "Werkzeug==3.0.4",
+        "Jinja2==3.1.2",
+        "click==8.1.7",
+        "itsdangerous==2.1.2",
+        "blinker==1.8.2",
+        "gunicorn==21.2.0",
+    ],
+    python_requires=">=3.11",
+) 

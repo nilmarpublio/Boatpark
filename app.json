@@ -1,0 +1,28 @@
+{
+  "name": "Boatpark",
+  "description": "Sistema de Gerenciamento de Marinas",
+  "repository": "https://github.com/nilmarpublio/Boatpark.git",
+  "logo": "",
+  "keywords": ["python", "flask", "marina", "management"],
+  "env": {
+    "FLASK_ENV": {
+      "description": "Environment for Flask app",
+      "value": "production"
+    },
+    "SECRET_KEY": {
+      "description": "Secret key for Flask app",
+      "generator": "secret"
+    }
+  },
+  "buildpacks": [
+    {
+      "url": "heroku/python"
+    }
+  ],
+  "formation": {
+    "web": {
+      "quantity": 1,
+      "size": "basic"
+    }
+  }
+} 
