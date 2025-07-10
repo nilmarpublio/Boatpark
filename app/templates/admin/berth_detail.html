@@ -1,0 +1,82 @@
+{% extends "base.html" %}
+
+{% block title %}Detalhe da Vaga - {{ berth.berth_number }}{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h1 class="h3">
+                    <i class="fas fa-anchor"></i> Vaga {{ berth.berth_number }}
+                </h1>
+                <a href="{{ url_for('admin.berths') }}" class="btn btn-secondary">
+                    <i class="fas fa-arrow-left"></i> Voltar à Lista
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-lg-6">
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h5 class="mb-0"><i class="fas fa-info-circle"></i> Informações da Vaga</h5>
+                </div>
+                <div class="card-body">
+                    <p><strong>Marina:</strong> {{ marina.name }}</p>
+                    <p><strong>Número:</strong> {{ berth.berth_number }}</p>
+                    <p><strong>Tipo:</strong> {{ berth.berth_type|title }}</p>
+                    <p><strong>Status Atual:</strong> <span class="badge badge-{{ 'success' if berth.is_available else 'warning' }}">{{ berth.status|title }}</span></p>
+                    <p><strong>Dimensões:</strong> {{ berth.length }}m x {{ berth.width }}m x {{ berth.depth }}m</p>
+                    <p><strong>Comprimento Máximo:</strong> {{ berth.max_boat_length }}m</p>
+                    <p><strong>Preço Mensal:</strong> R$ {{ '%.2f'|format(berth.monthly_rate or 0) }}</p>
+                    <p><strong>Descrição:</strong> {{ berth.description or '-' }}</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-lg-6">
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h5 class="mb-0"><i class="fas fa-history"></i> Histórico de Ocupação</h5>
+                </div>
+                <div class="card-body">
+                    {% if history %}
+                    <div class="table-responsive">
+                        <table class="table table-bordered table-sm">
+                            <thead>
+                                <tr>
+                                    <th>Status</th>
+                                    <th>Usuário</th>
+                                    <th>Assinatura</th>
+                                    <th>Início</th>
+                                    <th>Fim</th>
+                                    <th>Motivo</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for record in history %}
+                                <tr>
+                                    <td>{{ record.status_display }}</td>
+                                    <td>{% if record.user %}{{ record.user.full_name }}{% else %}-{% endif %}</td>
+                                    <td>{% if record.subscription %}#{{ record.subscription.id }}{% else %}-{% endif %}</td>
+                                    <td>{{ record.start_date.strftime('%d/%m/%Y %H:%M') }}</td>
+                                    <td>{% if record.end_date %}{{ record.end_date.strftime('%d/%m/%Y %H:%M') }}{% else %}<span class="badge badge-info">Ativo</span>{% endif %}</td>
+                                    <td>{{ record.reason or '-' }}</td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                    {% else %}
+                    <div class="text-center py-4">
+                        <i class="fas fa-history fa-2x text-muted mb-2"></i>
+                        <p class="text-muted">Nenhum histórico encontrado.</p>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %} 

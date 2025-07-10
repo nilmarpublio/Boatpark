@@ -1,0 +1,71 @@
+{% extends "base.html" %}
+
+{% block title %}Assinaturas{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h1 class="h3">
+                    <i class="fas fa-clipboard-list"></i> Assinaturas
+                </h1>
+                <a href="{{ url_for('admin.index') }}" class="btn btn-secondary">
+                    <i class="fas fa-arrow-left"></i> Voltar ao Dashboard
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <div class="card shadow mb-4">
+        <div class="card-header py-3">
+            <h6 class="m-0 font-weight-bold text-primary">Lista de Assinaturas</h6>
+        </div>
+        <div class="card-body">
+            {% if subscriptions %}
+            <div class="table-responsive">
+                <table class="table table-bordered" width="100%" cellspacing="0">
+                    <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>Usuário</th>
+                            <th>Marina</th>
+                            <th>Vaga</th>
+                            <th>Data de Início</th>
+                            <th>Data de Fim</th>
+                            <th>Valor Mensal</th>
+                            <th>Status</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for subscription in subscriptions %}
+                        <tr>
+                            <td>{{ subscription.id }}</td>
+                            <td>{{ subscription.user.name }}</td>
+                            <td>{{ subscription.berth.marina.name }}</td>
+                            <td>{{ subscription.berth.number }}</td>
+                            <td>{{ subscription.start_date.strftime('%d/%m/%Y') }}</td>
+                            <td>{{ subscription.end_date.strftime('%d/%m/%Y') }}</td>
+                            <td>R$ {{ "%.2f"|format(subscription.amount) }}</td>
+                            <td>
+                                {% if subscription.is_active %}
+                                <span class="badge badge-success">Ativa</span>
+                                {% else %}
+                                <span class="badge badge-secondary">Inativa</span>
+                                {% endif %}
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            {% else %}
+            <div class="text-center py-4">
+                <i class="fas fa-clipboard-list fa-3x text-muted mb-3"></i>
+                <p class="text-muted">Nenhuma assinatura encontrada.</p>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %} 

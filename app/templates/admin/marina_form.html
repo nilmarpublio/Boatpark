@@ -1,0 +1,623 @@
+{% extends "base.html" %}
+
+{% block title %}{{ 'Editar' if marina else 'Nova' }} Marina{% endblock %}
+
+{% block extra_head %}
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<style>
+    #map {
+        height: 400px;
+        width: 100%;
+        border-radius: 8px;
+        margin-bottom: 15px;
+    }
+    .photo-preview {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+        gap: 10px;
+        margin-top: 10px;
+    }
+    .photo-item {
+        position: relative;
+        border-radius: 8px;
+        overflow: hidden;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    }
+    .photo-item img {
+        width: 100%;
+        height: 100px;
+        object-fit: cover;
+    }
+    .photo-remove {
+        position: absolute;
+        top: 5px;
+        right: 5px;
+        background: rgba(255,0,0,0.8);
+        color: white;
+        border: none;
+        border-radius: 50%;
+        width: 25px;
+        height: 25px;
+        font-size: 12px;
+        cursor: pointer;
+    }
+    .amenity-item {
+        display: flex;
+        align-items: center;
+        margin-bottom: 10px;
+    }
+    .amenity-item input[type="text"] {
+        flex: 1;
+        margin-right: 10px;
+    }
+    .time-slot {
+        display: flex;
+        align-items: center;
+        margin-bottom: 10px;
+    }
+    .time-slot select {
+        margin-right: 10px;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h1 class="h3">
+                    <i class="fas fa-anchor"></i> {{ 'Editar' if marina else 'Nova' }} Marina
+                </h1>
+                <a href="{{ url_for('admin.marinas') }}" class="btn btn-secondary">
+                    <i class="fas fa-arrow-left"></i> Voltar à Lista
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <form method="POST" enctype="multipart/form-data">
+        <div class="row">
+            <!-- Informações Básicas -->
+            <div class="col-lg-8">
+                <div class="card mb-4">
+                    <div class="card-header">
+                        <h5 class="mb-0"><i class="fas fa-info-circle"></i> Informações Básicas</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label for="name">Nome da Marina *</label>
+                                    <input type="text" class="form-control" id="name" name="name" 
+                                           value="{{ marina.name if marina else '' }}" required>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label for="contact_person">Pessoa de Contato</label>
+                                    <input type="text" class="form-control" id="contact_person" name="contact_person"
+                                           value="{{ marina.contact_person if marina else '' }}">
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="description">Descrição</label>
+                            <textarea class="form-control" id="description" name="description" rows="4">{{ marina.description if marina else '' }}</textarea>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label for="phone">Telefone</label>
+                                    <input type="tel" class="form-control" id="phone" name="phone"
+                                           value="{{ marina.phone if marina else '' }}">
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label for="emergency_phone">Telefone de Emergência</label>
+                                    <input type="tel" class="form-control" id="emergency_phone" name="emergency_phone"
+                                           value="{{ marina.emergency_phone if marina else '' }}">
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label for="email">Email</label>
+                                    <input type="email" class="form-control" id="email" name="email"
+                                           value="{{ marina.email if marina else '' }}">
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label for="website">Website</label>
+                                    <input type="url" class="form-control" id="website" name="website"
+                                           value="{{ marina.website if marina else '' }}">
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Endereço e Localização -->
+                <div class="card mb-4">
+                    <div class="card-header">
+                        <h5 class="mb-0"><i class="fas fa-map-marker-alt"></i> Endereço e Localização</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="form-group">
+                            <label for="address">Endereço *</label>
+                            <input type="text" class="form-control" id="address" name="address"
+                                   value="{{ marina.address if marina else '' }}" required>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-md-4">
+                                <div class="form-group">
+                                    <label for="city">Cidade *</label>
+                                    <input type="text" class="form-control" id="city" name="city"
+                                           value="{{ marina.city if marina else '' }}" required>
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="form-group">
+                                    <label for="state">Estado *</label>
+                                    <select class="form-control" id="state" name="state" required>
+                                        <option value="">Selecione...</option>
+                                        <option value="AC" {{ 'selected' if marina and marina.state == 'AC' else '' }}>Acre</option>
+                                        <option value="AL" {{ 'selected' if marina and marina.state == 'AL' else '' }}>Alagoas</option>
+                                        <option value="AP" {{ 'selected' if marina and marina.state == 'AP' else '' }}>Amapá</option>
+                                        <option value="AM" {{ 'selected' if marina and marina.state == 'AM' else '' }}>Amazonas</option>
+                                        <option value="BA" {{ 'selected' if marina and marina.state == 'BA' else '' }}>Bahia</option>
+                                        <option value="CE" {{ 'selected' if marina and marina.state == 'CE' else '' }}>Ceará</option>
+                                        <option value="DF" {{ 'selected' if marina and marina.state == 'DF' else '' }}>Distrito Federal</option>
+                                        <option value="ES" {{ 'selected' if marina and marina.state == 'ES' else '' }}>Espírito Santo</option>
+                                        <option value="GO" {{ 'selected' if marina and marina.state == 'GO' else '' }}>Goiás</option>
+                                        <option value="MA" {{ 'selected' if marina and marina.state == 'MA' else '' }}>Maranhão</option>
+                                        <option value="MT" {{ 'selected' if marina and marina.state == 'MT' else '' }}>Mato Grosso</option>
+                                        <option value="MS" {{ 'selected' if marina and marina.state == 'MS' else '' }}>Mato Grosso do Sul</option>
+                                        <option value="MG" {{ 'selected' if marina and marina.state == 'MG' else '' }}>Minas Gerais</option>
+                                        <option value="PA" {{ 'selected' if marina and marina.state == 'PA' else '' }}>Pará</option>
+                                        <option value="PB" {{ 'selected' if marina and marina.state == 'PB' else '' }}>Paraíba</option>
+                                        <option value="PR" {{ 'selected' if marina and marina.state == 'PR' else '' }}>Paraná</option>
+                                        <option value="PE" {{ 'selected' if marina and marina.state == 'PE' else '' }}>Pernambuco</option>
+                                        <option value="PI" {{ 'selected' if marina and marina.state == 'PI' else '' }}>Piauí</option>
+                                        <option value="RJ" {{ 'selected' if marina and marina.state == 'RJ' else '' }}>Rio de Janeiro</option>
+                                        <option value="RN" {{ 'selected' if marina and marina.state == 'RN' else '' }}>Rio Grande do Norte</option>
+                                        <option value="RS" {{ 'selected' if marina and marina.state == 'RS' else '' }}>Rio Grande do Sul</option>
+                                        <option value="RO" {{ 'selected' if marina and marina.state == 'RO' else '' }}>Rondônia</option>
+                                        <option value="RR" {{ 'selected' if marina and marina.state == 'RR' else '' }}>Roraima</option>
+                                        <option value="SC" {{ 'selected' if marina and marina.state == 'SC' else '' }}>Santa Catarina</option>
+                                        <option value="SP" {{ 'selected' if marina and marina.state == 'SP' else '' }}>São Paulo</option>
+                                        <option value="SE" {{ 'selected' if marina and marina.state == 'SE' else '' }}>Sergipe</option>
+                                        <option value="TO" {{ 'selected' if marina and marina.state == 'TO' else '' }}>Tocantins</option>
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="form-group">
+                                    <label for="zip_code">CEP</label>
+                                    <input type="text" class="form-control" id="zip_code" name="zip_code"
+                                           value="{{ marina.zip_code if marina else '' }}">
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-md-4">
+                                <div class="form-group">
+                                    <label for="latitude">Latitude</label>
+                                    <input type="number" step="any" class="form-control" id="latitude" name="latitude"
+                                           value="{{ marina.latitude if marina else '' }}">
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="form-group">
+                                    <label for="longitude">Longitude</label>
+                                    <input type="number" step="any" class="form-control" id="longitude" name="longitude"
+                                           value="{{ marina.longitude if marina else '' }}">
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="form-group">
+                                    <label for="map_zoom">Zoom do Mapa</label>
+                                    <input type="number" min="1" max="20" class="form-control" id="map_zoom" name="map_zoom"
+                                           value="{{ marina.map_zoom if marina else 15 }}">
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="form-group">
+                            <label>Selecionar Localização no Mapa</label>
+                            <div id="map"></div>
+                            <small class="text-muted">Clique no mapa para definir a localização da marina</small>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Galeria de Fotos -->
+                <div class="card mb-4">
+                    <div class="card-header">
+                        <h5 class="mb-0"><i class="fas fa-images"></i> Galeria de Fotos</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="form-group">
+                            <label for="cover_photo">Foto de Capa</label>
+                            <input type="url" class="form-control" id="cover_photo" name="cover_photo_url"
+                                   value="{{ marina.cover_photo_url if marina else '' }}" 
+                                   placeholder="URL da foto de capa">
+                        </div>
+
+                        <div class="form-group">
+                            <label for="photos">URLs das Fotos (uma por linha)</label>
+                            <textarea class="form-control" id="photos" name="photos" rows="4" 
+                                      placeholder="https://exemplo.com/foto1.jpg&#10;https://exemplo.com/foto2.jpg">{{ '\n'.join(marina.photos_list) if marina and marina.photos_list else '' }}</textarea>
+                            <small class="text-muted">
+                                <i class="fas fa-info-circle"></i> 
+                                Dica: Use URLs de imagens públicas (ex: Imgur, Google Drive público, etc.)
+                            </small>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label>Upload Rápido de Fotos</label>
+                            <div class="upload-area" id="uploadArea">
+                                <div class="upload-content">
+                                    <i class="fas fa-cloud-upload-alt fa-3x text-muted"></i>
+                                    <p class="mt-2">Arraste fotos aqui ou clique para selecionar</p>
+                                    <input type="file" id="fileInput" multiple accept="image/*" style="display: none;">
+                                    <button type="button" class="btn btn-outline-primary" onclick="document.getElementById('fileInput').click()">
+                                        Selecionar Fotos
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+
+                        {% if marina and marina.photos_list %}
+                        <div class="photo-preview">
+                            {% for photo in marina.photos_list %}
+                            <div class="photo-item">
+                                <img src="{{ photo }}" alt="Foto da marina">
+                                <button type="button" class="photo-remove" onclick="removePhoto(this)">×</button>
+                            </div>
+                            {% endfor %}
+                        </div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+
+            <!-- Configurações e Serviços -->
+            <div class="col-lg-4">
+                <!-- Configurações -->
+                <div class="card mb-4">
+                    <div class="card-header">
+                        <h5 class="mb-0"><i class="fas fa-cog"></i> Configurações</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="form-group">
+                            <div class="custom-control custom-switch">
+                                <input type="checkbox" class="custom-control-input" id="is_active" name="is_active" 
+                                       {{ 'checked' if not marina or marina.is_active else '' }}>
+                                <label class="custom-control-label" for="is_active">Marina Ativa</label>
+                            </div>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="max_berths">Capacidade Máxima de Vagas</label>
+                            <input type="number" class="form-control" id="max_berths" name="max_berths"
+                                   value="{{ marina.max_berths if marina else 0 }}">
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Horários de Funcionamento -->
+                <div class="card mb-4">
+                    <div class="card-header">
+                        <h5 class="mb-0"><i class="fas fa-clock"></i> Horários de Funcionamento</h5>
+                    </div>
+                    <div class="card-body">
+                        <div id="opening-hours">
+                            {% set days = ['Segunda-feira', 'Terça-feira', 'Quarta-feira', 'Quinta-feira', 'Sexta-feira', 'Sábado', 'Domingo'] %}
+                            {% set hours_dict = marina.opening_hours_dict if marina else {} %}
+                            {% for day in days %}
+                            <div class="time-slot">
+                                <label style="min-width: 100px;">{{ day }}:</label>
+                                <input type="text" class="form-control" name="opening_hours_{{ day }}" 
+                                       value="{{ hours_dict.get(day, '') }}" placeholder="Ex: 08:00 - 18:00">
+                            </div>
+                            {% endfor %}
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Comodidades -->
+                <div class="card mb-4">
+                    <div class="card-header">
+                        <h5 class="mb-0"><i class="fas fa-star"></i> Comodidades</h5>
+                    </div>
+                    <div class="card-body">
+                        <div id="amenities">
+                            {% set amenities_list = marina.amenities_list if marina else [] %}
+                            {% for i in range(10) %}
+                            <div class="amenity-item">
+                                <input type="text" class="form-control" name="amenities[]" 
+                                       value="{{ amenities_list[i] if i < amenities_list|length else '' }}" 
+                                       placeholder="Ex: Estacionamento gratuito">
+                                <button type="button" class="btn btn-sm btn-outline-danger" onclick="removeAmenity(this)">×</button>
+                            </div>
+                            {% endfor %}
+                        </div>
+                        <button type="button" class="btn btn-sm btn-outline-primary" onclick="addAmenity()">
+                            <i class="fas fa-plus"></i> Adicionar Comodidade
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Serviços -->
+                <div class="card mb-4">
+                    <div class="card-header">
+                        <h5 class="mb-0"><i class="fas fa-tools"></i> Serviços</h5>
+                    </div>
+                    <div class="card-body">
+                        <div id="services">
+                            {% set services_list = marina.services_list if marina else [] %}
+                            {% for i in range(10) %}
+                            <div class="amenity-item">
+                                <input type="text" class="form-control" name="services[]" 
+                                       value="{{ services_list[i] if i < services_list|length else '' }}" 
+                                       placeholder="Ex: Manutenção de motores">
+                                <button type="button" class="btn btn-sm btn-outline-danger" onclick="removeAmenity(this)">×</button>
+                            </div>
+                            {% endfor %}
+                        </div>
+                        <button type="button" class="btn btn-sm btn-outline-primary" onclick="addService()">
+                            <i class="fas fa-plus"></i> Adicionar Serviço
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Regras -->
+                <div class="card mb-4">
+                    <div class="card-header">
+                        <h5 class="mb-0"><i class="fas fa-gavel"></i> Regras da Marina</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="form-group">
+                            <textarea class="form-control" name="rules" rows="6" 
+                                      placeholder="Regras e regulamentos da marina...">{{ marina.rules if marina else '' }}</textarea>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Botões de Ação -->
+        <div class="row">
+            <div class="col-12">
+                <div class="card">
+                    <div class="card-body text-center">
+                        <button type="submit" class="btn btn-primary btn-lg">
+                            <i class="fas fa-save"></i> {{ 'Atualizar' if marina else 'Criar' }} Marina
+                        </button>
+                        <a href="{{ url_for('admin.marinas') }}" class="btn btn-secondary btn-lg ml-2">
+                            <i class="fas fa-times"></i> Cancelar
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </form>
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+    // Inicializar mapa
+    var map = L.map('map').setView([-23.5505, -46.6333], 13); // São Paulo como padrão
+    
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        attribution: '© OpenStreetMap contributors'
+    }).addTo(map);
+    
+    var marker;
+    
+    // Definir localização inicial se existir
+    {% if marina and marina.latitude and marina.longitude %}
+    var lat = {{ marina.latitude }};
+    var lng = {{ marina.longitude }};
+    map.setView([lat, lng], {{ marina.map_zoom }});
+    marker = L.marker([lat, lng]).addTo(map);
+    {% endif %}
+    
+    // Adicionar marcador ao clicar no mapa
+    map.on('click', function(e) {
+        if (marker) {
+            map.removeLayer(marker);
+        }
+        marker = L.marker(e.latlng).addTo(map);
+        document.getElementById('latitude').value = e.latlng.lat.toFixed(6);
+        document.getElementById('longitude').value = e.latlng.lng.toFixed(6);
+    });
+    
+    // Funções para adicionar/remover comodidades e serviços
+    function addAmenity() {
+        var container = document.getElementById('amenities');
+        var newItem = document.createElement('div');
+        newItem.className = 'amenity-item';
+        newItem.innerHTML = `
+            <input type="text" class="form-control" name="amenities[]" placeholder="Ex: Estacionamento gratuito">
+            <button type="button" class="btn btn-sm btn-outline-danger" onclick="removeAmenity(this)">×</button>
+        `;
+        container.appendChild(newItem);
+    }
+    
+    function addService() {
+        var container = document.getElementById('services');
+        var newItem = document.createElement('div');
+        newItem.className = 'amenity-item';
+        newItem.innerHTML = `
+            <input type="text" class="form-control" name="services[]" placeholder="Ex: Manutenção de motores">
+            <button type="button" class="btn btn-sm btn-outline-danger" onclick="removeAmenity(this)">×</button>
+        `;
+        container.appendChild(newItem);
+    }
+    
+    function removeAmenity(button) {
+        button.parentElement.remove();
+    }
+    
+    function removePhoto(button) {
+        button.parentElement.remove();
+    }
+    
+    // Upload de arquivos
+    const uploadArea = document.getElementById('uploadArea');
+    const fileInput = document.getElementById('fileInput');
+    
+    // Drag and drop
+    uploadArea.addEventListener('dragover', (e) => {
+        e.preventDefault();
+        uploadArea.classList.add('dragover');
+    });
+    
+    uploadArea.addEventListener('dragleave', () => {
+        uploadArea.classList.remove('dragover');
+    });
+    
+    uploadArea.addEventListener('drop', (e) => {
+        e.preventDefault();
+        uploadArea.classList.remove('dragover');
+        const files = e.dataTransfer.files;
+        handleFiles(files);
+    });
+    
+    fileInput.addEventListener('change', (e) => {
+        handleFiles(e.target.files);
+    });
+    
+    function handleFiles(files) {
+        Array.from(files).forEach(file => {
+            if (file.type.startsWith('image/')) {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    // Aqui você pode implementar upload para servidor
+                    // Por enquanto, apenas mostra preview
+                    showImagePreview(e.target.result, file.name);
+                };
+                reader.readAsDataURL(file);
+            }
+        });
+    }
+    
+    function showImagePreview(src, filename) {
+        const photosTextarea = document.getElementById('photos');
+        const currentUrls = photosTextarea.value.split('\n').filter(url => url.trim());
+        currentUrls.push(src);
+        photosTextarea.value = currentUrls.join('\n');
+        
+        // Adicionar preview
+        const previewContainer = document.querySelector('.photo-preview') || createPreviewContainer();
+        const photoItem = document.createElement('div');
+        photoItem.className = 'photo-item';
+        photoItem.innerHTML = `
+            <img src="${src}" alt="${filename}">
+            <button type="button" class="photo-remove" onclick="removePhoto(this)">×</button>
+        `;
+        previewContainer.appendChild(photoItem);
+    }
+    
+    function createPreviewContainer() {
+        const container = document.createElement('div');
+        container.className = 'photo-preview';
+        document.querySelector('.form-group').appendChild(container);
+        return container;
+    }
+</script>
+
+<style>
+.upload-area {
+    border: 2px dashed #ddd;
+    border-radius: 8px;
+    padding: 40px;
+    text-align: center;
+    transition: all 0.3s ease;
+    background: #f8f9fa;
+}
+
+.upload-area.dragover {
+    border-color: #007bff;
+    background: #e3f2fd;
+}
+
+.upload-content {
+    color: #6c757d;
+}
+
+.photo-preview {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+    gap: 15px;
+    margin-top: 15px;
+}
+
+.photo-item {
+    position: relative;
+    border-radius: 8px;
+    overflow: hidden;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.photo-item img {
+    width: 100%;
+    height: 120px;
+    object-fit: cover;
+}
+
+.photo-remove {
+    position: absolute;
+    top: 5px;
+    right: 5px;
+    background: rgba(255,0,0,0.8);
+    color: white;
+    border: none;
+    border-radius: 50%;
+    width: 25px;
+    height: 25px;
+    cursor: pointer;
+    font-size: 14px;
+}
+
+.amenity-item {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 10px;
+    align-items: center;
+}
+
+.amenity-item input {
+    flex: 1;
+}
+
+.time-slot {
+    display: flex;
+    align-items: center;
+    margin-bottom: 10px;
+    gap: 10px;
+}
+
+.time-slot input {
+    flex: 1;
+}
+
+#map {
+    height: 400px;
+    border-radius: 8px;
+    margin-top: 10px;
+}
+</style>
+{% endblock %} 

@@ -1,0 +1,14 @@
+{% extends "base.html" %}
+
+{% block title %}Página não encontrada{% endblock %}
+
+{% block content %}
+<div class="text-center mt-5">
+    <h1 class="display-3 text-danger">404</h1>
+    <h2>Página não encontrada</h2>
+    <p>A página ou arquivo que você tentou acessar não existe, foi removido ou está temporariamente indisponível.</p>
+    <a href="{{ url_for('dashboard.index') }}" class="btn btn-primary mt-3">
+        <i class="fas fa-arrow-left"></i> Voltar ao início
+    </a>
+</div>
+{% endblock %} 

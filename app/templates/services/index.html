@@ -1,0 +1,142 @@
+{% extends "base.html" %}
+
+{% block title %}Serviços da Marina{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1 class="h3">
+            <i class="fas fa-tools"></i> Serviços da Marina
+        </h1>
+        <div>
+            <a href="{{ url_for('services.my_selections') }}" class="btn btn-info">
+                <i class="fas fa-list"></i> Meus Serviços Selecionados
+            </a>
+            <a href="{{ url_for('dashboard.index') }}" class="btn btn-secondary">
+                <i class="fas fa-arrow-left"></i> Voltar
+            </a>
+        </div>
+    </div>
+
+    <!-- Informações da Assinatura -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card border-primary">
+                <div class="card-header bg-primary text-white">
+                    <h6 class="mb-0">
+                        <i class="fas fa-info-circle"></i> Sua Assinatura Ativa
+                    </h6>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <strong>Marina:</strong> {{ subscription.marina.name }}<br>
+                            <strong>Plano:</strong> {{ subscription.plan_name }}<br>
+                            <strong>Status:</strong> 
+                            <span class="badge badge-success">Ativa</span>
+                        </div>
+                        <div class="col-md-6">
+                            <strong>Vaga:</strong> {{ subscription.berth.berth_number if subscription.berth else 'Não atribuída' }}<br>
+                            <strong>Valor:</strong> R$ {{ "%.2f"|format(subscription.amount) }}<br>
+                            <strong>Próximo Pagamento:</strong> {{ subscription.next_billing_date.strftime('%d/%m/%Y') if subscription.next_billing_date else 'N/A' }}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Formulário de Seleção -->
+    <form method="POST" action="{{ url_for('services.select_services') }}">
+        <div class="row">
+            {% for category, services in services_by_category.items() %}
+            <div class="col-lg-6 mb-4">
+                <div class="card shadow">
+                    <div class="card-header bg-light">
+                        <h6 class="mb-0">
+                            <i class="fas fa-tag"></i> {{ category }}
+                        </h6>
+                    </div>
+                    <div class="card-body">
+                        {% for service in services %}
+                        <div class="service-item border-bottom pb-2 mb-2">
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" 
+                                       name="selected_services" value="{{ service.id }}" 
+                                       id="service_{{ service.id }}"
+                                       {% if service.id in selected_service_ids %}checked{% endif %}>
+                                <label class="form-check-label" for="service_{{ service.id }}">
+                                    <div class="d-flex justify-content-between align-items-start">
+                                        <div class="flex-grow-1">
+                                            <strong>{{ service.name }}</strong>
+                                            <br>
+                                            <small class="text-muted">{{ service.description[:100] }}{% if service.description|length > 100 %}...{% endif %}</small>
+                                        </div>
+                                        <div class="text-right ml-2">
+                                            <span class="badge badge-primary">{{ service.formatted_price }}</span>
+                                            {% if service.requires_approval %}
+                                            <span class="badge badge-warning">Aprovação</span>
+                                            {% endif %}
+                                        </div>
+                                    </div>
+                                </label>
+                            </div>
+                            <div class="mt-1">
+                                <small class="text-muted">
+                                    <i class="fas fa-clock"></i> 
+                                    {% if service.max_duration_hours %}
+                                        Máx: {{ service.max_duration_hours }}h
+                                    {% else %}
+                                        Duração variável
+                                    {% endif %}
+                                </small>
+                                <a href="{{ url_for('services.service_details', service_id=service.id) }}" 
+                                   class="btn btn-sm btn-outline-info float-right">
+                                    <i class="fas fa-eye"></i> Detalhes
+                                </a>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+
+        <!-- Botões de Ação -->
+        <div class="row mt-4">
+            <div class="col-12">
+                <div class="card">
+                    <div class="card-body text-center">
+                        <button type="submit" class="btn btn-primary btn-lg">
+                            <i class="fas fa-save"></i> Salvar Seleção de Serviços
+                        </button>
+                        <a href="{{ url_for('services.my_selections') }}" class="btn btn-secondary btn-lg ml-2">
+                            <i class="fas fa-list"></i> Ver Meus Serviços
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </form>
+</div>
+
+<script>
+// Contador de serviços selecionados
+document.addEventListener('DOMContentLoaded', function() {
+    const checkboxes = document.querySelectorAll('input[name="selected_services"]');
+    const submitBtn = document.querySelector('button[type="submit"]');
+    
+    function updateCounter() {
+        const checked = document.querySelectorAll('input[name="selected_services"]:checked').length;
+        submitBtn.innerHTML = `<i class="fas fa-save"></i> Salvar Seleção (${checked} serviços)`;
+    }
+    
+    checkboxes.forEach(checkbox => {
+        checkbox.addEventListener('change', updateCounter);
+    });
+    
+    updateCounter();
+});
+</script>
+{% endblock %} 

@@ -1,0 +1,151 @@
+{% extends "base.html" %}
+
+{% block title %}Solicitações de Serviços{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1 class="h3"><i class="fas fa-clipboard-list"></i> Solicitações de Serviços</h1>
+        <a href="{{ url_for('services.admin_index') }}" class="btn btn-secondary">
+            <i class="fas fa-arrow-left"></i> Voltar
+        </a>
+    </div>
+    
+    <!-- Filtros -->
+    <div class="card shadow mb-4">
+        <div class="card-header py-3">
+            <h6 class="m-0 font-weight-bold text-primary">Filtros</h6>
+        </div>
+        <div class="card-body">
+            <form method="GET" class="row">
+                <div class="col-md-4">
+                    <div class="form-group">
+                        <label for="status">Status</label>
+                        <select class="form-control" id="status" name="status">
+                            <option value="">Todos os status</option>
+                            <option value="requested" {% if status_filter == 'requested' %}selected{% endif %}>Solicitado</option>
+                            <option value="scheduled" {% if status_filter == 'scheduled' %}selected{% endif %}>Agendado</option>
+                            <option value="in_progress" {% if status_filter == 'in_progress' %}selected{% endif %}>Em Andamento</option>
+                            <option value="completed" {% if status_filter == 'completed' %}selected{% endif %}>Concluído</option>
+                            <option value="cancelled" {% if status_filter == 'cancelled' %}selected{% endif %}>Cancelado</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="form-group">
+                        <label>&nbsp;</label>
+                        <button type="submit" class="btn btn-primary btn-block">
+                            <i class="fas fa-filter"></i> Filtrar
+                        </button>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+    
+    <!-- Lista de Solicitações -->
+    <div class="card shadow mb-4">
+        <div class="card-header py-3">
+            <h6 class="m-0 font-weight-bold text-primary">Solicitações</h6>
+        </div>
+        <div class="card-body">
+            {% if requests.items %}
+            <div class="table-responsive">
+                <table class="table table-bordered">
+                    <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>Cliente</th>
+                            <th>Serviço</th>
+                            <th>Embarcação</th>
+                            <th>Data Preferida</th>
+                            <th>Status</th>
+                            <th>Pagamento</th>
+                            <th>Ações</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for request in requests.items %}
+                        <tr>
+                            <td>{{ request.id }}</td>
+                            <td>{{ request.user.full_name }}</td>
+                            <td>{{ request.service.name }}</td>
+                            <td>{{ request.vessel_name }}</td>
+                            <td>{{ request.preferred_date.strftime('%d/%m/%Y') }} às {{ request.preferred_time.strftime('%H:%M') }}</td>
+                            <td>
+                                {% if request.status == 'requested' %}
+                                <span class="badge badge-warning">{{ request.status_display }}</span>
+                                {% elif request.status == 'scheduled' %}
+                                <span class="badge badge-info">{{ request.status_display }}</span>
+                                {% elif request.status == 'in_progress' %}
+                                <span class="badge badge-primary">{{ request.status_display }}</span>
+                                {% elif request.status == 'completed' %}
+                                <span class="badge badge-success">{{ request.status_display }}</span>
+                                {% elif request.status == 'cancelled' %}
+                                <span class="badge badge-danger">{{ request.status_display }}</span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                {% if request.payment_status == 'pending' %}
+                                <span class="badge badge-warning">{{ request.payment_status_display }}</span>
+                                {% elif request.payment_status == 'paid' %}
+                                <span class="badge badge-success">{{ request.payment_status_display }}</span>
+                                {% else %}
+                                <span class="badge badge-secondary">{{ request.payment_status_display }}</span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                <a href="{{ url_for('services.admin_request_detail', request_id=request.id) }}" class="btn btn-sm btn-info">
+                                    <i class="fas fa-eye"></i> Ver
+                                </a>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            
+            <!-- Paginação -->
+            {% if requests.pages > 1 %}
+            <nav aria-label="Navegação de páginas">
+                <ul class="pagination justify-content-center">
+                    {% if requests.has_prev %}
+                    <li class="page-item">
+                        <a class="page-link" href="{{ url_for('services.admin_requests', page=requests.prev_num, status=status_filter) }}">Anterior</a>
+                    </li>
+                    {% endif %}
+
+                    {% for page_num in requests.iter_pages() %}
+                        {% if page_num %}
+                            {% if page_num != requests.page %}
+                            <li class="page-item">
+                                <a class="page-link" href="{{ url_for('services.admin_requests', page=page_num, status=status_filter) }}">{{ page_num }}</a>
+                            </li>
+                            {% else %}
+                            <li class="page-item active">
+                                <span class="page-link">{{ page_num }}</span>
+                            </li>
+                            {% endif %}
+                        {% else %}
+                        <li class="page-item disabled">
+                            <span class="page-link">...</span>
+                        </li>
+                        {% endif %}
+                    {% endfor %}
+
+                    {% if requests.has_next %}
+                    <li class="page-item">
+                        <a class="page-link" href="{{ url_for('services.admin_requests', page=requests.next_num, status=status_filter) }}">Próximo</a>
+                    </li>
+                    {% endif %}
+                </ul>
+            </nav>
+            {% endif %}
+            
+            {% else %}
+            <p class="text-muted">Nenhuma solicitação encontrada.</p>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %} 

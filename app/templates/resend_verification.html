@@ -1,0 +1,49 @@
+{% extends "base.html" %}
+{% block title %}Reenviar Verificação - BOATHOUSE{% endblock %}
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-6 col-lg-4">
+        <div class="card shadow">
+            <div class="card-header bg-warning text-dark text-center">
+                <h4 class="mb-0">
+                    <i class="fas fa-envelope me-2"></i>Reenviar Verificação
+                </h4>
+                <p class="mb-0">Verifique seu email para ativar sua conta</p>
+            </div>
+            <div class="card-body p-4">
+                <div class="alert alert-info">
+                    <i class="fas fa-info-circle me-2"></i>
+                    <strong>Informação:</strong> Digite seu email para receber um novo link de verificação.
+                </div>
+                
+                <form method="POST">
+                    <div class="mb-3">
+                        <label for="email" class="form-label">
+                            <i class="fas fa-envelope me-2"></i>Email
+                        </label>
+                        <input type="email" 
+                               class="form-control" 
+                               id="email" 
+                               name="email" 
+                               placeholder="seu@email.com" 
+                               required 
+                               autofocus>
+                    </div>
+                    <div class="d-grid">
+                        <button type="submit" class="btn btn-warning btn-lg">
+                            <i class="fas fa-paper-plane me-2"></i>Reenviar Email
+                        </button>
+                    </div>
+                </form>
+            </div>
+            <div class="card-footer text-center">
+                <p class="mb-0">
+                    <a href="{{ url_for('auth.login') }}" class="text-decoration-none">
+                        <i class="fas fa-arrow-left me-1"></i>Voltar ao Login
+                    </a>
+                </p>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %} 

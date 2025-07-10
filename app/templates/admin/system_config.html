@@ -1,0 +1,197 @@
+{% extends "base.html" %}
+
+{% block title %}Configurações do Sistema{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1 class="h3"><i class="fas fa-cogs"></i> Configurações do Sistema</h1>
+        <a href="{{ url_for('admin.index') }}" class="btn btn-secondary">
+            <i class="fas fa-arrow-left"></i> Voltar
+        </a>
+    </div>
+
+    <div class="row">
+        <div class="col-lg-12">
+            <div class="card shadow">
+                <div class="card-header py-3">
+                    <h6 class="m-0 font-weight-bold text-primary">Configurações Gerais</h6>
+                </div>
+                <div class="card-body">
+                    <form method="POST">
+                        <!-- Configurações de Pagamento -->
+                        <div class="row mb-4">
+                            <div class="col-md-12">
+                                <h5 class="text-primary mb-3">Configurações de Pagamento</h5>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="form-group">
+                                    <label for="payment_reminder_days">Dias para Lembrete de Pagamento</label>
+                                    <input type="number" class="form-control" id="payment_reminder_days" 
+                                           name="payment_reminder_days" value="{{ config.payment_reminder_days }}" min="1" max="30">
+                                    <small class="form-text text-muted">Dias antes do vencimento para enviar lembrete</small>
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="form-group">
+                                    <label for="payment_overdue_days">Dias para Suspensão</label>
+                                    <input type="number" class="form-control" id="payment_overdue_days" 
+                                           name="payment_overdue_days" value="{{ config.payment_overdue_days }}" min="1" max="30">
+                                    <small class="form-text text-muted">Dias após vencimento para suspender assinatura</small>
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="form-group">
+                                    <label for="vessel_removal_days">Dias para Retirada da Embarcação</label>
+                                    <input type="number" class="form-control" id="vessel_removal_days" 
+                                           name="vessel_removal_days" value="{{ config.vessel_removal_days }}" min="1" max="90">
+                                    <small class="form-text text-muted">Dias após suspensão para retirada obrigatória</small>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Mensagens de Aviso -->
+                        <div class="row mb-4">
+                            <div class="col-md-12">
+                                <h5 class="text-primary mb-3">Mensagens de Aviso</h5>
+                                <p class="text-muted">Configure as mensagens que serão exibidas aos usuários. Use {days} para incluir o número de dias.</p>
+                            </div>
+                            <div class="col-md-12">
+                                <div class="form-group">
+                                    <label for="payment_reminder_message">Mensagem de Lembrete de Pagamento</label>
+                                    <textarea class="form-control" id="payment_reminder_message" name="payment_reminder_message" 
+                                              rows="3" placeholder="Ex: Seu pagamento vence em {days} dias. Evite a suspensão da sua assinatura.">{{ config.payment_reminder_message }}</textarea>
+                                </div>
+                            </div>
+                            <div class="col-md-12">
+                                <div class="form-group">
+                                    <label for="payment_overdue_message">Mensagem de Pagamento em Atraso</label>
+                                    <textarea class="form-control" id="payment_overdue_message" name="payment_overdue_message" 
+                                              rows="3" placeholder="Ex: Seu pagamento está em atraso. Sua assinatura foi suspensa.">{{ config.payment_overdue_message }}</textarea>
+                                </div>
+                            </div>
+                            <div class="col-md-12">
+                                <div class="form-group">
+                                    <label for="vessel_removal_message">Mensagem de Retirada de Embarcação</label>
+                                    <textarea class="form-control" id="vessel_removal_message" name="vessel_removal_message" 
+                                              rows="3" placeholder="Ex: Sua embarcação deve ser retirada em {days} dias devido ao não pagamento.">{{ config.vessel_removal_message }}</textarea>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Configurações de Notificação -->
+                        <div class="row mb-4">
+                            <div class="col-md-12">
+                                <h5 class="text-primary mb-3">Configurações de Notificação</h5>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="form-check">
+                                    <input class="form-check-input" type="checkbox" id="send_email_notifications" 
+                                           name="send_email_notifications" {% if config.send_email_notifications %}checked{% endif %}>
+                                    <label class="form-check-label" for="send_email_notifications">
+                                        Enviar Notificações por Email
+                                    </label>
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="form-check">
+                                    <input class="form-check-input" type="checkbox" id="send_sms_notifications" 
+                                           name="send_sms_notifications" {% if config.send_sms_notifications %}checked{% endif %}>
+                                    <label class="form-check-label" for="send_sms_notifications">
+                                        Enviar Notificações por SMS
+                                    </label>
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="form-check">
+                                    <input class="form-check-input" type="checkbox" id="send_push_notifications" 
+                                           name="send_push_notifications" {% if config.send_push_notifications %}checked{% endif %}>
+                                    <label class="form-check-label" for="send_push_notifications">
+                                        Enviar Notificações Push
+                                    </label>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Configurações de Manutenção -->
+                        <div class="row mb-4">
+                            <div class="col-md-12">
+                                <h5 class="text-primary mb-3">Modo de Manutenção</h5>
+                            </div>
+                            <div class="col-md-12">
+                                <div class="form-check mb-3">
+                                    <input class="form-check-input" type="checkbox" id="maintenance_mode" 
+                                           name="maintenance_mode" {% if config.maintenance_mode %}checked{% endif %}>
+                                    <label class="form-check-label" for="maintenance_mode">
+                                        Ativar Modo de Manutenção
+                                    </label>
+                                </div>
+                            </div>
+                            <div class="col-md-12">
+                                <div class="form-group">
+                                    <label for="maintenance_message">Mensagem de Manutenção</label>
+                                    <textarea class="form-control" id="maintenance_message" name="maintenance_message" 
+                                              rows="3" placeholder="Ex: Sistema em manutenção. Volte em breve.">{{ config.maintenance_message }}</textarea>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-md-12">
+                                <button type="submit" class="btn btn-primary">
+                                    <i class="fas fa-save"></i> Salvar Configurações
+                                </button>
+                                <a href="{{ url_for('admin.index') }}" class="btn btn-secondary">
+                                    <i class="fas fa-times"></i> Cancelar
+                                </a>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+$(document).ready(function() {
+    // Preview das mensagens
+    function updateMessagePreview() {
+        const reminderMessage = $('#payment_reminder_message').val();
+        const overdueMessage = $('#payment_overdue_message').val();
+        const removalMessage = $('#vessel_removal_message').val();
+        
+        // Aqui você pode adicionar preview em tempo real se desejar
+    }
+    
+    $('textarea').on('input', updateMessagePreview);
+    
+    // Validação do formulário
+    $('form').on('submit', function(e) {
+        const reminderDays = parseInt($('#payment_reminder_days').val());
+        const overdueDays = parseInt($('#payment_overdue_days').val());
+        const removalDays = parseInt($('#vessel_removal_days').val());
+        
+        if (reminderDays < 1 || reminderDays > 30) {
+            alert('Dias para lembrete deve estar entre 1 e 30');
+            e.preventDefault();
+            return false;
+        }
+        
+        if (overdueDays < 1 || overdueDays > 30) {
+            alert('Dias para suspensão deve estar entre 1 e 30');
+            e.preventDefault();
+            return false;
+        }
+        
+        if (removalDays < 1 || removalDays > 90) {
+            alert('Dias para retirada deve estar entre 1 e 90');
+            e.preventDefault();
+            return false;
+        }
+    });
+});
+</script>
+{% endblock %} 

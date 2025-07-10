@@ -1,0 +1,397 @@
+{% extends "base.html" %}
+
+{% block title %}Gerenciar Pagamentos{% endblock %}
+
+{% block extra_head %}
+<link rel="stylesheet" href="https://cdn.datatables.net/1.11.5/css/dataTables.bootstrap5.min.css">
+<script src="https://cdn.datatables.net/1.11.5/js/jquery.dataTables.min.js"></script>
+<script src="https://cdn.datatables.net/1.11.5/js/dataTables.bootstrap5.min.js"></script>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <!-- Cabeçalho -->
+    <div class="row">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h1 class="h3">
+                    <i class="fas fa-credit-card"></i> Gerenciar Pagamentos
+                </h1>
+                <div>
+                    <button class="btn btn-success me-2" onclick="exportPayments()">
+                        <i class="fas fa-file-excel"></i> Exportar
+                    </button>
+                    <a href="{{ url_for('admin.reports') }}" class="btn btn-info me-2">
+                        <i class="fas fa-chart-bar"></i> Relatórios
+                    </a>
+                    <a href="{{ url_for('admin.index') }}" class="btn btn-secondary">
+                        <i class="fas fa-arrow-left"></i> Voltar ao Dashboard
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Filtros -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card shadow">
+                <div class="card-header py-3">
+                    <h6 class="m-0 font-weight-bold text-primary">Filtros</h6>
+                </div>
+                <div class="card-body">
+                    <form id="paymentFilters" class="row">
+                        <div class="col-md-3 mb-3">
+                            <label for="statusFilter" class="form-label">Status</label>
+                            <select class="form-select" id="statusFilter" name="status">
+                                <option value="">Todos os status</option>
+                                <option value="pending">Pendente</option>
+                                <option value="confirmed">Confirmado</option>
+                                <option value="cancelled">Cancelado</option>
+                                <option value="overdue">Vencido</option>
+                            </select>
+                        </div>
+                        <div class="col-md-3 mb-3">
+                            <label for="methodFilter" class="form-label">Método</label>
+                            <select class="form-select" id="methodFilter" name="method">
+                                <option value="">Todos os métodos</option>
+                                <option value="credit_card">Cartão de Crédito</option>
+                                <option value="bank_slip">Boleto</option>
+                                <option value="pix">PIX</option>
+                            </select>
+                        </div>
+                        <div class="col-md-3 mb-3">
+                            <label for="dateFrom" class="form-label">Data Inicial</label>
+                            <input type="date" class="form-control" id="dateFrom" name="dateFrom">
+                        </div>
+                        <div class="col-md-3 mb-3">
+                            <label for="dateTo" class="form-label">Data Final</label>
+                            <input type="date" class="form-control" id="dateTo" name="dateTo">
+                        </div>
+                        <div class="col-12">
+                            <button type="submit" class="btn btn-primary">
+                                <i class="fas fa-filter"></i> Aplicar Filtros
+                            </button>
+                            <button type="button" class="btn btn-outline-secondary" onclick="clearFilters()">
+                                <i class="fas fa-times"></i> Limpar
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Cards de Resumo -->
+    <div class="row mb-4">
+        <div class="col-xl-3 col-md-6 mb-4">
+            <div class="card border-left-success shadow h-100 py-2">
+                <div class="card-body">
+                    <div class="row no-gutters align-items-center">
+                        <div class="col mr-2">
+                            <div class="text-xs font-weight-bold text-success text-uppercase mb-1">
+                                Total Confirmado</div>
+                            <div class="h5 mb-0 font-weight-bold text-gray-800" id="totalConfirmed">R$ {{ "%.2f"|format(total_confirmed) }}</div>
+                        </div>
+                        <div class="col-auto">
+                            <i class="fas fa-check-circle fa-2x text-gray-300"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-xl-3 col-md-6 mb-4">
+            <div class="card border-left-warning shadow h-100 py-2">
+                <div class="card-body">
+                    <div class="row no-gutters align-items-center">
+                        <div class="col mr-2">
+                            <div class="text-xs font-weight-bold text-warning text-uppercase mb-1">
+                                Pendentes</div>
+                            <div class="h5 mb-0 font-weight-bold text-gray-800" id="totalPending">{{ total_pending }}</div>
+                        </div>
+                        <div class="col-auto">
+                            <i class="fas fa-clock fa-2x text-gray-300"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-xl-3 col-md-6 mb-4">
+            <div class="card border-left-danger shadow h-100 py-2">
+                <div class="card-body">
+                    <div class="row no-gutters align-items-center">
+                        <div class="col mr-2">
+                            <div class="text-xs font-weight-bold text-danger text-uppercase mb-1">
+                                Vencidos</div>
+                            <div class="h5 mb-0 font-weight-bold text-gray-800" id="totalOverdue">{{ total_overdue }}</div>
+                        </div>
+                        <div class="col-auto">
+                            <i class="fas fa-exclamation-triangle fa-2x text-gray-300"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-xl-3 col-md-6 mb-4">
+            <div class="card border-left-info shadow h-100 py-2">
+                <div class="card-body">
+                    <div class="row no-gutters align-items-center">
+                        <div class="col mr-2">
+                            <div class="text-xs font-weight-bold text-info text-uppercase mb-1">
+                                Taxa de Sucesso</div>
+                            <div class="h5 mb-0 font-weight-bold text-gray-800" id="successRate">{{ "%.1f"|format(success_rate) }}%</div>
+                        </div>
+                        <div class="col-auto">
+                            <i class="fas fa-percentage fa-2x text-gray-300"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Tabela de Pagamentos -->
+    <div class="card shadow">
+        <div class="card-header py-3">
+            <h6 class="m-0 font-weight-bold text-primary">
+                Pagamentos 
+                <span class="badge badge-info">{{ payments.total }} registros</span>
+            </h6>
+        </div>
+        <div class="card-body">
+            {% if payments.items %}
+            <div class="table-responsive">
+                <table class="table table-bordered" width="100%" cellspacing="0" id="paymentsTable">
+                    <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>Data</th>
+                            <th>Usuário</th>
+                            <th>Marina</th>
+                            <th>Valor</th>
+                            <th>Status</th>
+                            <th>Método</th>
+                            <th>Vencimento</th>
+                            <th>ASAAS ID</th>
+                            <th>Ações</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for payment in payments.items %}
+                        <tr>
+                            <td>{{ payment.id }}</td>
+                            <td>{{ payment.created_at.strftime('%d/%m/%Y %H:%M') }}</td>
+                            <td>
+                                <a href="{{ url_for('admin.user_detail', user_id=payment.subscription.user.id) }}">
+                                    {{ payment.subscription.user.full_name }}
+                                </a>
+                            </td>
+                            <td>{{ payment.subscription.marina.name }}</td>
+                            <td>R$ {{ "%.2f"|format(payment.amount) }}</td>
+                            <td>
+                                {% if payment.status == 'confirmed' %}
+                                <span class="badge badge-success">Confirmado</span>
+                                {% elif payment.status == 'pending' %}
+                                <span class="badge badge-warning">Pendente</span>
+                                {% elif payment.status == 'cancelled' %}
+                                <span class="badge badge-danger">Cancelado</span>
+                                {% elif payment.status == 'overdue' %}
+                                <span class="badge badge-danger">Vencido</span>
+                                {% else %}
+                                <span class="badge badge-secondary">{{ payment.status }}</span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                {% if payment.payment_method == 'credit_card' %}
+                                <i class="fas fa-credit-card"></i> Cartão
+                                {% elif payment.payment_method == 'bank_slip' %}
+                                <i class="fas fa-file-invoice"></i> Boleto
+                                {% elif payment.payment_method == 'pix' %}
+                                <i class="fas fa-qrcode"></i> PIX
+                                {% else %}
+                                {{ payment.payment_method or 'N/A' }}
+                                {% endif %}
+                            </td>
+                            <td>
+                                {% if payment.due_date %}
+                                {{ payment.due_date.strftime('%d/%m/%Y') }}
+                                {% if payment.is_overdue %}
+                                <br><small class="text-danger">({{ payment.days_overdue }} dias atraso)</small>
+                                {% endif %}
+                                {% else %}
+                                N/A
+                                {% endif %}
+                            </td>
+                            <td>
+                                {% if payment.asaas_payment_id %}
+                                <small class="text-muted">{{ payment.asaas_payment_id }}</small>
+                                {% else %}
+                                <span class="text-muted">N/A</span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                <div class="btn-group" role="group">
+                                    <button type="button" class="btn btn-sm btn-outline-primary" 
+                                            onclick="viewPayment({{ payment.id }})" title="Ver detalhes">
+                                        <i class="fas fa-eye"></i>
+                                    </button>
+                                    {% if payment.status == 'pending' %}
+                                    <button type="button" class="btn btn-sm btn-outline-success" 
+                                            onclick="confirmPayment({{ payment.id }})" title="Confirmar pagamento">
+                                        <i class="fas fa-check"></i>
+                                    </button>
+                                    {% endif %}
+                                    {% if payment.payment_url %}
+                                    <a href="{{ payment.payment_url }}" target="_blank" 
+                                       class="btn btn-sm btn-outline-info" title="Ver cobrança">
+                                        <i class="fas fa-external-link-alt"></i>
+                                    </a>
+                                    {% endif %}
+                                </div>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            
+            <!-- Paginação -->
+            {% if payments.pages > 1 %}
+            <nav aria-label="Paginação">
+                <ul class="pagination justify-content-center">
+                    {% if payments.has_prev %}
+                    <li class="page-item">
+                        <a class="page-link" href="{{ url_for('admin.payments', page=payments.prev_num) }}">Anterior</a>
+                    </li>
+                    {% endif %}
+                    
+                    {% for page_num in payments.iter_pages() %}
+                        {% if page_num %}
+                            {% if page_num != payments.page %}
+                            <li class="page-item">
+                                <a class="page-link" href="{{ url_for('admin.payments', page=page_num) }}">{{ page_num }}</a>
+                            </li>
+                            {% else %}
+                            <li class="page-item active">
+                                <span class="page-link">{{ page_num }}</span>
+                            </li>
+                            {% endif %}
+                        {% else %}
+                        <li class="page-item disabled">
+                            <span class="page-link">...</span>
+                        </li>
+                        {% endif %}
+                    {% endfor %}
+                    
+                    {% if payments.has_next %}
+                    <li class="page-item">
+                        <a class="page-link" href="{{ url_for('admin.payments', page=payments.next_num) }}">Próximo</a>
+                    </li>
+                    {% endif %}
+                </ul>
+            </nav>
+            {% endif %}
+            
+            {% else %}
+            <p class="text-muted">Nenhum pagamento encontrado.</p>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<!-- Modal de Detalhes do Pagamento -->
+<div class="modal fade" id="paymentModal" tabindex="-1" aria-labelledby="paymentModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="paymentModalLabel">Detalhes do Pagamento</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body" id="paymentModalBody">
+                <!-- Conteúdo será carregado via AJAX -->
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Fechar</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+$(document).ready(function() {
+    // Inicializar DataTable
+    $('#paymentsTable').DataTable({
+        language: {
+            url: '//cdn.datatables.net/plug-ins/1.11.5/i18n/pt-BR.json'
+        },
+        pageLength: 25,
+        order: [[1, 'desc']]
+    });
+});
+
+// Funções de filtro
+document.getElementById('paymentFilters').addEventListener('submit', function(e) {
+    e.preventDefault();
+    applyFilters();
+});
+
+function applyFilters() {
+    const formData = new FormData(document.getElementById('paymentFilters'));
+    const params = new URLSearchParams(formData);
+    window.location.href = '{{ url_for("admin.payments") }}?' + params.toString();
+}
+
+function clearFilters() {
+    document.getElementById('paymentFilters').reset();
+    window.location.href = '{{ url_for("admin.payments") }}';
+}
+
+// Ver detalhes do pagamento
+function viewPayment(paymentId) {
+    fetch(`/admin/api/payments/${paymentId}`)
+        .then(response => response.json())
+        .then(data => {
+            document.getElementById('paymentModalBody').innerHTML = data.html;
+            const modal = new bootstrap.Modal(document.getElementById('paymentModal'));
+            modal.show();
+        })
+        .catch(error => {
+            alert('Erro ao carregar detalhes do pagamento');
+        });
+}
+
+// Confirmar pagamento
+function confirmPayment(paymentId) {
+    if (confirm('Confirmar este pagamento?')) {
+        fetch(`/admin/api/payments/${paymentId}/confirm`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            }
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                alert('Pagamento confirmado com sucesso!');
+                window.location.reload();
+            } else {
+                alert('Erro ao confirmar pagamento: ' + data.error);
+            }
+        })
+        .catch(error => {
+            alert('Erro ao processar pagamento');
+        });
+    }
+}
+
+// Exportar pagamentos
+function exportPayments() {
+    const formData = new FormData(document.getElementById('paymentFilters'));
+    const params = new URLSearchParams(formData);
+    window.open('{{ url_for("admin.export_payments") }}?' + params.toString(), '_blank');
+}
+ </script>
+{% endblock %} 

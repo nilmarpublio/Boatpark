@@ -1,0 +1,473 @@
+{% extends "base.html" %}
+
+{% block title %}Relatórios - Admin{% endblock %}
+
+{% block extra_head %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.29/jspdf.plugin.autotable.min.js"></script>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <!-- Cabeçalho -->
+    <div class="row">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h1 class="h3">
+                    <i class="fas fa-chart-bar"></i> Relatórios e Estatísticas
+                </h1>
+                <div>
+                    <button class="btn btn-success me-2" onclick="exportToPDF()">
+                        <i class="fas fa-file-pdf"></i> Exportar PDF
+                    </button>
+                    <button class="btn btn-info me-2" onclick="exportToExcel()">
+                        <i class="fas fa-file-excel"></i> Exportar Excel
+                    </button>
+                    <a href="{{ url_for('admin.index') }}" class="btn btn-secondary">
+                        <i class="fas fa-arrow-left"></i> Voltar ao Dashboard
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Filtros -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card shadow">
+                <div class="card-header py-3">
+                    <h6 class="m-0 font-weight-bold text-primary">Filtros</h6>
+                </div>
+                <div class="card-body">
+                    <form id="reportFilters" class="row">
+                        <div class="col-md-3 mb-3">
+                            <label for="dateFrom" class="form-label">Data Inicial</label>
+                            <input type="date" class="form-control" id="dateFrom" name="dateFrom">
+                        </div>
+                        <div class="col-md-3 mb-3">
+                            <label for="dateTo" class="form-label">Data Final</label>
+                            <input type="date" class="form-control" id="dateTo" name="dateTo">
+                        </div>
+                        <div class="col-md-3 mb-3">
+                            <label for="marinaFilter" class="form-label">Marina</label>
+                            <select class="form-select" id="marinaFilter" name="marina">
+                                <option value="">Todas as marinas</option>
+                                {% for marina in marinas %}
+                                <option value="{{ marina.id }}">{{ marina.name }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="col-md-3 mb-3">
+                            <label for="planFilter" class="form-label">Plano</label>
+                            <select class="form-select" id="planFilter" name="plan">
+                                <option value="">Todos os planos</option>
+                                {% for plan in plans %}
+                                <option value="{{ plan.id }}">{{ plan.display_name }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="col-12">
+                            <button type="submit" class="btn btn-primary">
+                                <i class="fas fa-filter"></i> Aplicar Filtros
+                            </button>
+                            <button type="button" class="btn btn-outline-secondary" onclick="clearFilters()">
+                                <i class="fas fa-times"></i> Limpar
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Cards de Resumo -->
+    <div class="row mb-4">
+        <div class="col-xl-3 col-md-6 mb-4">
+            <div class="card border-left-primary shadow h-100 py-2">
+                <div class="card-body">
+                    <div class="row no-gutters align-items-center">
+                        <div class="col mr-2">
+                            <div class="text-xs font-weight-bold text-primary text-uppercase mb-1">
+                                Receita Total</div>
+                            <div class="h5 mb-0 font-weight-bold text-gray-800" id="totalRevenue">R$ {{ "%.2f"|format(total_revenue) }}</div>
+                        </div>
+                        <div class="col-auto">
+                            <i class="fas fa-dollar-sign fa-2x text-gray-300"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-xl-3 col-md-6 mb-4">
+            <div class="card border-left-success shadow h-100 py-2">
+                <div class="card-body">
+                    <div class="row no-gutters align-items-center">
+                        <div class="col mr-2">
+                            <div class="text-xs font-weight-bold text-success text-uppercase mb-1">
+                                Assinaturas Ativas</div>
+                            <div class="h5 mb-0 font-weight-bold text-gray-800" id="activeSubscriptions">{{ active_subscriptions }}</div>
+                        </div>
+                        <div class="col-auto">
+                            <i class="fas fa-clipboard-list fa-2x text-gray-300"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-xl-3 col-md-6 mb-4">
+            <div class="card border-left-info shadow h-100 py-2">
+                <div class="card-body">
+                    <div class="row no-gutters align-items-center">
+                        <div class="col mr-2">
+                            <div class="text-xs font-weight-bold text-info text-uppercase mb-1">
+                                Taxa de Ocupação</div>
+                            <div class="h5 mb-0 font-weight-bold text-gray-800" id="occupancyRate">{{ "%.1f"|format(occupancy_rate) }}%</div>
+                        </div>
+                        <div class="col-auto">
+                            <i class="fas fa-percentage fa-2x text-gray-300"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-xl-3 col-md-6 mb-4">
+            <div class="card border-left-warning shadow h-100 py-2">
+                <div class="card-body">
+                    <div class="row no-gutters align-items-center">
+                        <div class="col mr-2">
+                            <div class="text-xs font-weight-bold text-warning text-uppercase mb-1">
+                                Pagamentos Pendentes</div>
+                            <div class="h5 mb-0 font-weight-bold text-gray-800" id="pendingPayments">{{ pending_payments }}</div>
+                        </div>
+                        <div class="col-auto">
+                            <i class="fas fa-clock fa-2x text-gray-300"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Gráficos -->
+    <div class="row">
+        <!-- Receita Mensal -->
+        <div class="col-xl-8 col-lg-7">
+            <div class="card shadow mb-4">
+                <div class="card-header py-3 d-flex flex-row align-items-center justify-content-between">
+                    <h6 class="m-0 font-weight-bold text-primary">Receita Mensal</h6>
+                    <div class="dropdown no-arrow">
+                        <a class="dropdown-toggle" href="#" role="button" id="dropdownMenuLink"
+                            data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                            <i class="fas fa-ellipsis-v fa-sm fa-fw text-gray-400"></i>
+                        </a>
+                        <div class="dropdown-menu dropdown-menu-right shadow animated--fade-in"
+                            aria-labelledby="dropdownMenuLink">
+                            <div class="dropdown-header">Opções:</div>
+                            <a class="dropdown-item" href="#" onclick="updateChart('monthly')">Últimos 12 meses</a>
+                            <a class="dropdown-item" href="#" onclick="updateChart('quarterly')">Por trimestre</a>
+                        </div>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <div class="chart-area">
+                        <canvas id="revenueChart"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Distribuição por Marina -->
+        <div class="col-xl-4 col-lg-5">
+            <div class="card shadow mb-4">
+                <div class="card-header py-3">
+                    <h6 class="m-0 font-weight-bold text-primary">Receita por Marina</h6>
+                </div>
+                <div class="card-body">
+                    <div class="chart-pie pt-4 pb-2">
+                        <canvas id="marinaChart"></canvas>
+                    </div>
+                    <div class="mt-4 text-center small">
+                        {% for marina in marina_revenue %}
+                        <span class="mr-2">
+                            <i class="fas fa-circle text-primary"></i> {{ marina.name }}
+                        </span>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Tabelas de Dados -->
+    <div class="row">
+        <!-- Top Marinas -->
+        <div class="col-lg-6 mb-4">
+            <div class="card shadow mb-4">
+                <div class="card-header py-3">
+                    <h6 class="m-0 font-weight-bold text-primary">Top 10 Marinas por Receita</h6>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-bordered" width="100%" cellspacing="0">
+                            <thead>
+                                <tr>
+                                    <th>Marina</th>
+                                    <th>Receita</th>
+                                    <th>Assinaturas</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for marina in marina_revenue %}
+                                <tr>
+                                    <td>{{ marina.name }}</td>
+                                    <td>R$ {{ "%.2f"|format(marina.total) }}</td>
+                                    <td>{{ marina.subscriptions }}</td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Estatísticas de Serviços -->
+        <div class="col-lg-6 mb-4">
+            <div class="card shadow mb-4">
+                <div class="card-header py-3">
+                    <h6 class="m-0 font-weight-bold text-primary">Estatísticas de Serviços</h6>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-bordered" width="100%" cellspacing="0">
+                            <thead>
+                                <tr>
+                                    <th>Serviço</th>
+                                    <th>Total</th>
+                                    <th>Valor Médio</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for service in service_stats %}
+                                <tr>
+                                    <td>{{ service.name }}</td>
+                                    <td>{{ service.total_requests }}</td>
+                                    <td>R$ {{ "%.2f"|format(service.avg_amount or 0) }}</td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Relatório Detalhado -->
+    <div class="row">
+        <div class="col-12">
+            <div class="card shadow mb-4">
+                <div class="card-header py-3">
+                    <h6 class="m-0 font-weight-bold text-primary">Relatório Detalhado de Pagamentos</h6>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-bordered" width="100%" cellspacing="0" id="paymentsTable">
+                            <thead>
+                                <tr>
+                                    <th>Data</th>
+                                    <th>Usuário</th>
+                                    <th>Marina</th>
+                                    <th>Valor</th>
+                                    <th>Status</th>
+                                    <th>Método</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for payment in recent_payments %}
+                                <tr>
+                                    <td>{{ payment.created_at.strftime('%d/%m/%Y') }}</td>
+                                    <td>{{ payment.subscription.user.full_name }}</td>
+                                    <td>{{ payment.subscription.marina.name }}</td>
+                                    <td>R$ {{ "%.2f"|format(payment.amount) }}</td>
+                                    <td>
+                                        {% if payment.status == 'confirmed' %}
+                                        <span class="badge badge-success">Confirmado</span>
+                                        {% elif payment.status == 'pending' %}
+                                        <span class="badge badge-warning">Pendente</span>
+                                        {% else %}
+                                        <span class="badge badge-secondary">{{ payment.status }}</span>
+                                        {% endif %}
+                                    </td>
+                                    <td>{{ payment.payment_method or 'N/A' }}</td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+// Dados para os gráficos
+const monthlyRevenueData = {{ monthly_revenue|tojson }};
+const marinaRevenueData = {{ marina_revenue|tojson }};
+
+// Gráfico de Receita Mensal
+const revenueCtx = document.getElementById('revenueChart').getContext('2d');
+const revenueChart = new Chart(revenueCtx, {
+    type: 'line',
+    data: {
+        labels: monthlyRevenueData.map(item => item.month),
+        datasets: [{
+            label: 'Receita (R$)',
+            data: monthlyRevenueData.map(item => item.total),
+            borderColor: 'rgb(75, 192, 192)',
+            backgroundColor: 'rgba(75, 192, 192, 0.2)',
+            tension: 0.1
+        }]
+    },
+    options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        scales: {
+            y: {
+                beginAtZero: true,
+                ticks: {
+                    callback: function(value) {
+                        return 'R$ ' + value.toLocaleString('pt-BR');
+                    }
+                }
+            }
+        },
+        plugins: {
+            tooltip: {
+                callbacks: {
+                    label: function(context) {
+                        return 'Receita: R$ ' + context.parsed.y.toLocaleString('pt-BR');
+                    }
+                }
+            }
+        }
+    }
+});
+
+// Gráfico de Pizza - Marinas
+const marinaCtx = document.getElementById('marinaChart').getContext('2d');
+const marinaChart = new Chart(marinaCtx, {
+    type: 'doughnut',
+    data: {
+        labels: marinaRevenueData.map(item => item.name),
+        datasets: [{
+            data: marinaRevenueData.map(item => item.total),
+            backgroundColor: [
+                '#4e73df', '#1cc88a', '#36b9cc', '#f6c23e', '#e74a3b',
+                '#858796', '#5a5c69', '#2e59d9', '#17a673', '#2c9faf'
+            ]
+        }]
+    },
+    options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+            legend: {
+                position: 'bottom'
+            },
+            tooltip: {
+                callbacks: {
+                    label: function(context) {
+                        const total = context.dataset.data.reduce((a, b) => a + b, 0);
+                        const percentage = ((context.parsed / total) * 100).toFixed(1);
+                        return context.label + ': R$ ' + context.parsed.toLocaleString('pt-BR') + ' (' + percentage + '%)';
+                    }
+                }
+            }
+        }
+    }
+});
+
+// Funções de filtro
+document.getElementById('reportFilters').addEventListener('submit', function(e) {
+    e.preventDefault();
+    applyFilters();
+});
+
+function applyFilters() {
+    const formData = new FormData(document.getElementById('reportFilters'));
+    const params = new URLSearchParams(formData);
+    
+    // Aqui você pode fazer uma requisição AJAX para atualizar os dados
+    // Por enquanto, vamos apenas recarregar a página
+    window.location.href = '{{ url_for("admin.reports") }}?' + params.toString();
+}
+
+function clearFilters() {
+    document.getElementById('reportFilters').reset();
+    window.location.href = '{{ url_for("admin.reports") }}';
+}
+
+function updateChart(type) {
+    // Função para atualizar o gráfico baseado no tipo selecionado
+    console.log('Atualizando gráfico para:', type);
+}
+
+// Exportação para PDF
+function exportToPDF() {
+    const { jsPDF } = window.jspdf;
+    const doc = new jsPDF();
+    
+    // Título
+    doc.setFontSize(20);
+    doc.text('Relatório BoatHouse', 20, 20);
+    
+    // Data
+    doc.setFontSize(12);
+    doc.text('Gerado em: ' + new Date().toLocaleDateString('pt-BR'), 20, 30);
+    
+    // Estatísticas
+    doc.setFontSize(14);
+    doc.text('Resumo:', 20, 45);
+    doc.setFontSize(12);
+    doc.text('Receita Total: ' + document.getElementById('totalRevenue').textContent, 20, 55);
+    doc.text('Assinaturas Ativas: ' + document.getElementById('activeSubscriptions').textContent, 20, 65);
+    doc.text('Taxa de Ocupação: ' + document.getElementById('occupancyRate').textContent, 20, 75);
+    
+    // Tabela de pagamentos
+    const tableData = [];
+    const rows = document.querySelectorAll('#paymentsTable tbody tr');
+    rows.forEach(row => {
+        const cells = row.querySelectorAll('td');
+        tableData.push([
+            cells[0].textContent,
+            cells[1].textContent,
+            cells[2].textContent,
+            cells[3].textContent,
+            cells[4].textContent
+        ]);
+    });
+    
+    doc.autoTable({
+        head: [['Data', 'Usuário', 'Marina', 'Valor', 'Status']],
+        body: tableData,
+        startY: 90,
+        theme: 'grid'
+    });
+    
+    doc.save('relatorio-boathouse.pdf');
+}
+
+// Exportação para Excel (simulada)
+function exportToExcel() {
+    // Aqui você pode implementar a exportação real para Excel
+    // Por enquanto, vamos apenas mostrar uma mensagem
+    alert('Funcionalidade de exportação para Excel será implementada em breve!');
+}
+</script>
+{% endblock %} 

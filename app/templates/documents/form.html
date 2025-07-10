@@ -1,0 +1,199 @@
+{% extends "base.html" %}
+
+{% block title %}{{ 'Editar' if document else 'Novo' }} Documento{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1 class="h3">
+            <i class="fas fa-file-alt"></i> {{ 'Editar' if document else 'Novo' }} Documento
+        </h1>
+        <a href="{{ url_for('documents.index') }}" class="btn btn-secondary">
+            <i class="fas fa-arrow-left"></i> Voltar
+        </a>
+    </div>
+
+    <form method="POST">
+        <div class="row">
+            <div class="col-lg-8">
+                <div class="card mb-4">
+                    <div class="card-header">
+                        <h5 class="mb-0"><i class="fas fa-info-circle"></i> Informações do Documento</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label for="title">Título do Documento *</label>
+                                    <input type="text" class="form-control" id="title" name="title" 
+                                           value="{{ document.document_name if document else '' }}" required>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label for="type">Tipo de Documento *</label>
+                                    <select class="form-control" id="type" name="type" required>
+                                        <option value="">Selecione o tipo</option>
+                                        <option value="Licença Náutica" {% if document and document.document_type == 'Licença Náutica' %}selected{% endif %}>Licença Náutica</option>
+                                        <option value="Registro da Embarcação" {% if document and document.document_type == 'Registro da Embarcação' %}selected{% endif %}>Registro da Embarcação</option>
+                                        <option value="Seguro" {% if document and document.document_type == 'Seguro' %}selected{% endif %}>Seguro</option>
+                                        <option value="Documento de Identidade" {% if document and document.document_type == 'Documento de Identidade' %}selected{% endif %}>Documento de Identidade</option>
+                                        <option value="Certificado de Arrais Amador" {% if document and document.document_type == 'Certificado de Arrais Amador' %}selected{% endif %}>Certificado de Arrais Amador</option>
+                                        <option value="Certificado de Mestre Amador" {% if document and document.document_type == 'Certificado de Mestre Amador' %}selected{% endif %}>Certificado de Mestre Amador</option>
+                                        <option value="Certificado de Capitão Amador" {% if document and document.document_type == 'Certificado de Capitão Amador' %}selected{% endif %}>Certificado de Capitão Amador</option>
+                                        <option value="Outro" {% if document and document.document_type == 'Outro' %}selected{% endif %}>Outro</option>
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label for="number">Número do Documento</label>
+                                    <input type="text" class="form-control" id="number" name="number" 
+                                           value="{{ document.document_number if document else '' }}">
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label for="issuing_authority">Órgão Emissor</label>
+                                    <input type="text" class="form-control" id="issuing_authority" name="issuing_authority" 
+                                           value="{{ document.issuing_authority if document else '' }}">
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label for="issue_date">Data de Emissão</label>
+                                    <input type="date" class="form-control" id="issue_date" name="issue_date" 
+                                           value="{{ document.issue_date.strftime('%Y-%m-%d') if document and document.issue_date else '' }}">
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label for="expiry_date">Data de Expiração</label>
+                                    <input type="date" class="form-control" id="expiry_date" name="expiry_date" 
+                                           value="{{ document.expiry_date.strftime('%Y-%m-%d') if document and document.expiry_date else '' }}">
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="description">Descrição</label>
+                            <textarea class="form-control" id="description" name="description" rows="3" 
+                                      placeholder="Descrição do documento...">{{ document.description if document else '' }}</textarea>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card mb-4">
+                    <div class="card-header">
+                        <h5 class="mb-0"><i class="fas fa-link"></i> Arquivo</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="form-group">
+                            <label for="file_url">URL do Arquivo</label>
+                            <input type="url" class="form-control" id="file_url" name="file_url" 
+                                   value="{{ document.file_path if document else '' }}" 
+                                   placeholder="https://exemplo.com/documento.pdf">
+                            <small class="text-muted">
+                                <i class="fas fa-info-circle"></i> 
+                                Dica: Use URLs de arquivos públicos (ex: Google Drive público, Dropbox, etc.)
+                            </small>
+                        </div>
+
+                        {% if document and document.file_url %}
+                        <div class="mt-3">
+                            <strong>Arquivo atual:</strong>
+                            <a href="{{ document.file_url }}" target="_blank" class="btn btn-sm btn-outline-primary">
+                                <i class="fas fa-external-link-alt"></i> Abrir Arquivo
+                            </a>
+                        </div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-lg-4">
+                <div class="card mb-4">
+                    <div class="card-header">
+                        <h5 class="mb-0"><i class="fas fa-tags"></i> Categorização</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="form-group">
+                            <label for="category">Categoria</label>
+                            <select class="form-control" id="category" name="category">
+                                <option value="">Selecione</option>
+                                <option value="Pessoal" {% if document and document.category == 'Pessoal' %}selected{% endif %}>Pessoal</option>
+                                <option value="Embarcação" {% if document and document.category == 'Embarcação' %}selected{% endif %}>Embarcação</option>
+                                <option value="Licenciamento" {% if document and document.category == 'Licenciamento' %}selected{% endif %}>Licenciamento</option>
+                                <option value="Seguro" {% if document and document.category == 'Seguro' %}selected{% endif %}>Seguro</option>
+                                <option value="Outro" {% if document and document.category == 'Outro' %}selected{% endif %}>Outro</option>
+                            </select>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="priority">Prioridade</label>
+                            <select class="form-control" id="priority" name="priority">
+                                <option value="Baixa" {% if document and document.priority == 'Baixa' %}selected{% endif %}>Baixa</option>
+                                <option value="Média" {% if document and document.priority == 'Média' %}selected{% endif %}>Média</option>
+                                <option value="Alta" {% if document and document.priority == 'Alta' %}selected{% endif %}>Alta</option>
+                                <option value="Crítica" {% if document and document.priority == 'Crítica' %}selected{% endif %}>Crítica</option>
+                            </select>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="status">Status</label>
+                            <select class="form-control" id="status" name="status">
+                                <option value="Ativo" {% if document and document.status == 'Ativo' %}selected{% endif %}>Ativo</option>
+                                <option value="Expirado" {% if document and document.status == 'Expirado' %}selected{% endif %}>Expirado</option>
+                                <option value="Pendente" {% if document and document.status == 'Pendente' %}selected{% endif %}>Pendente</option>
+                                <option value="Cancelado" {% if document and document.status == 'Cancelado' %}selected{% endif %}>Cancelado</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card mb-4">
+                    <div class="card-header">
+                        <h5 class="mb-0"><i class="fas fa-sticky-note"></i> Observações</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="form-group">
+                            <label for="notes">Notas</label>
+                            <textarea class="form-control" id="notes" name="notes" rows="3" 
+                                      placeholder="Notas pessoais...">{{ document.notes if document else '' }}</textarea>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card mb-4">
+                    <div class="card-header">
+                        <h5 class="mb-0"><i class="fas fa-bell"></i> Lembretes</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="form-group">
+                            <label for="reminder_days">Lembrar (dias antes da expiração)</label>
+                            <input type="number" class="form-control" id="reminder_days" name="reminder_days" 
+                                   value="{{ document.reminder_days if document else 30 }}" min="1" max="365">
+                            <small class="text-muted">Dias antes da expiração para receber lembretes</small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="d-flex justify-content-end">
+            <a href="{{ url_for('documents.index') }}" class="btn btn-secondary me-2">
+                Cancelar
+            </a>
+            <button type="submit" class="btn btn-success">
+                <i class="fas fa-save"></i> {{ 'Atualizar' if document else 'Cadastrar' }} Documento
+            </button>
+        </div>
+    </form>
+</div>
+{% endblock %} 

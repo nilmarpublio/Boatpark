@@ -1,0 +1,233 @@
+{% extends "base.html" %}
+
+{% block title %}Nova Assinatura{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row justify-content-center">
+        <div class="col-lg-10">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h1 class="h3">
+                    <i class="fas fa-plus-circle"></i> Nova Assinatura
+                </h1>
+                <a href="{{ url_for('dashboard.index') }}" class="btn btn-secondary">
+                    <i class="fas fa-arrow-left"></i> Voltar ao Dashboard
+                </a>
+            </div>
+
+            <!-- Planos Disponíveis -->
+            <div class="row mb-4">
+                <div class="col-12">
+                    <div class="card shadow">
+                        <div class="card-header bg-primary text-white">
+                            <h5 class="mb-0">
+                                <i class="fas fa-list"></i> Planos Disponíveis
+                            </h5>
+                        </div>
+                        <div class="card-body">
+                            <div class="row">
+                                {% for plan in plans %}
+                                <div class="col-md-4 mb-3">
+                                    <div class="card h-100 {% if plan.is_featured %}border-warning{% endif %}">
+                                        {% if plan.is_featured %}
+                                        <div class="card-header bg-warning text-dark text-center">
+                                            <i class="fas fa-star"></i> Plano em Destaque
+                                        </div>
+                                        {% endif %}
+                                        <div class="card-body text-center">
+                                            <h5 class="card-title">{{ plan.display_name }}</h5>
+                                            <p class="card-text text-muted">{{ plan.description }}</p>
+
+                                            <div class="pricing mb-3">
+                                                <h3 class="text-primary">R$ {{ "%.2f"|format(plan.monthly_price) }}</h3>
+                                                <small class="text-muted">por mês</small>
+                                                {% if plan.yearly_price %}
+                                                <br>
+                                                <small class="text-success">
+                                                    R$ {{ "%.2f"|format(plan.yearly_price) }}/ano
+                                                    <span class="badge bg-success">Economia</span>
+                                                </small>
+                                                {% endif %}
+                                            </div>
+
+                                            <ul class="list-unstyled">
+                                                {% for feature in plan.features_list %}
+                                                <li><i class="fas fa-check text-success"></i> {{ feature }}</li>
+                                                {% endfor %}
+                                            </ul>
+                                        </div>
+                                    </div>
+                                </div>
+                                {% endfor %}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Formulário de Assinatura -->
+            <div class="card shadow">
+                <div class="card-header bg-success text-white">
+                    <h5 class="mb-0">
+                        <i class="fas fa-edit"></i> Criar Nova Assinatura
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <form method="POST">
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label for="plan_id" class="form-label">Plano *</label>
+                                <select class="form-select" id="plan_id" name="plan_id" required>
+                                    <option value="">Selecione um plano</option>
+                                    {% for plan in plans %}
+                                    <option value="{{ plan.id }}">
+                                        {{ plan.display_name }} - R$ {{ "%.2f"|format(plan.monthly_price) }}/mês
+                                    </option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label for="billing_cycle" class="form-label">Ciclo de Cobrança *</label>
+                                <select class="form-select" id="billing_cycle" name="billing_cycle" required>
+                                    <option value="">Selecione o ciclo</option>
+                                    <option value="monthly">Mensal</option>
+                                    <option value="yearly">Anual (Economia)</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label for="marina_id" class="form-label">Marina *</label>
+                                <select class="form-select" id="marina_id" name="marina_id" required>
+                                    <option value="">Selecione uma marina</option>
+                                    {% for marina in marinas %}
+                                    <option value="{{ marina.id }}">{{ marina.name }}</option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label for="berth_id" class="form-label">Vaga *</label>
+                                <select class="form-select" id="berth_id" name="berth_id" required>
+                                    <option value="">Selecione primeiro uma marina</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label">Informações da Vaga</label>
+                                <div id="berth-info" class="form-control-plaintext">
+                                    Selecione uma vaga para ver as informações
+                                </div>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label">Resumo da Assinatura</label>
+                                <div id="subscription-summary" class="form-control-plaintext">
+                                    Preencha os campos acima para ver o resumo
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="alert alert-info">
+                            <i class="fas fa-info-circle"></i>
+                            <strong>Informações:</strong>
+                            <ul class="mb-0 mt-2">
+                                <li>A assinatura será criada com status "Ativo"</li>
+                                <li>O primeiro pagamento será cobrado automaticamente</li>
+                                <li>A vaga será marcada como "Ocupada"</li>
+                                <li>A renovação será automática conforme o ciclo escolhido</li>
+                                <li>Você receberá acesso imediato aos serviços da marina</li>
+                            </ul>
+                        </div>
+
+                        <div class="d-flex justify-content-end">
+                            <a href="{{ url_for('dashboard.index') }}" class="btn btn-secondary me-2">
+                                Cancelar
+                            </a>
+                            <button type="submit" class="btn btn-success">
+                                <i class="fas fa-plus"></i> Criar Assinatura
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    // Carregar vagas quando uma marina for selecionada
+    document.getElementById('marina_id').addEventListener('change', function () {
+        const marinaId = this.value;
+        const berthSelect = document.getElementById('berth_id');
+        const berthInfo = document.getElementById('berth-info');
+
+        // Limpar opções
+        berthSelect.innerHTML = '<option value="">Selecione uma vaga</option>';
+        berthInfo.textContent = 'Selecione uma vaga para ver as informações';
+
+        if (marinaId) {
+            // Buscar vagas disponíveis da marina
+            fetch(`/subscriptions/api/marinas/${marinaId}/berths`)
+                .then(response => response.json())
+                .then(data => {
+                    if (data.berths && data.berths.length > 0) {
+                        data.berths.forEach(berth => {
+                            const option = document.createElement('option');
+                            option.value = berth.id;
+                            option.textContent = `Vaga ${berth.number} - ${berth.type} (${berth.length}m)`;
+                            berthSelect.appendChild(option);
+                        });
+                    } else {
+                        berthSelect.innerHTML = '<option value="">Nenhuma vaga disponível</option>';
+                    }
+                })
+                .catch(error => {
+                    console.error('Erro ao carregar vagas:', error);
+                    berthSelect.innerHTML = '<option value="">Erro ao carregar vagas</option>';
+                });
+        }
+    });
+
+    // Mostrar informações da vaga quando selecionada
+    document.getElementById('berth_id').addEventListener('change', function () {
+        const berthId = this.value;
+        const berthInfo = document.getElementById('berth-info');
+
+        if (berthId) {
+            const selectedOption = this.options[this.selectedIndex];
+            berthInfo.textContent = selectedOption.textContent;
+        } else {
+            berthInfo.textContent = 'Selecione uma vaga para ver as informações';
+        }
+
+        updateSubscriptionSummary();
+    });
+
+    // Atualizar resumo da assinatura
+    function updateSubscriptionSummary() {
+        const planSelect = document.getElementById('plan_id');
+        const billingCycleSelect = document.getElementById('billing_cycle');
+        const summaryDiv = document.getElementById('subscription-summary');
+
+        if (planSelect.value && billingCycleSelect.value) {
+            const planOption = planSelect.options[planSelect.selectedIndex];
+            const cycle = billingCycleSelect.value;
+
+            let summary = `Plano: ${planOption.textContent.split(' - ')[0]}\n`;
+            summary += `Ciclo: ${cycle === 'monthly' ? 'Mensal' : 'Anual'}\n`;
+            summary += `Status: Ativo\n`;
+            summary += `Renovação: Automática`;
+
+            summaryDiv.textContent = summary;
+        } else {
+            summaryDiv.textContent = 'Preencha os campos acima para ver o resumo';
+        }
+    }
+
+    // Atualizar resumo quando planos ou ciclo mudarem
+    document.getElementById('plan_id').addEventListener('change', updateSubscriptionSummary);
+    document.getElementById('billing_cycle').addEventListener('change', updateSubscriptionSummary);
+</script>
+{% endblock %}

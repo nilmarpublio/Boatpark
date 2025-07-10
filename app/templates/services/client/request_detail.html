@@ -1,0 +1,187 @@
+{% extends "base.html" %}
+
+{% block title %}Detalhes da Solicitação{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1 class="h3"><i class="fas fa-clipboard-list"></i> Detalhes da Solicitação #{{ service_request.id }}</h1>
+        <a href="{{ url_for('services.my_requests') }}" class="btn btn-secondary">
+            <i class="fas fa-arrow-left"></i> Voltar
+        </a>
+    </div>
+    
+    <div class="row">
+        <div class="col-lg-8">
+            <!-- Informações do Serviço -->
+            <div class="card shadow mb-4">
+                <div class="card-header py-3">
+                    <h6 class="m-0 font-weight-bold text-primary">Informações do Serviço</h6>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <p><strong>Serviço:</strong> {{ service_request.service.name }}</p>
+                            <p><strong>Marina:</strong> {{ service_request.marina.name }}</p>
+                            <p><strong>Preço Original:</strong> R$ {{ '%.2f'|format(service_request.original_price) }}</p>
+                            {% if service_request.final_price %}
+                            <p><strong>Preço Final:</strong> R$ {{ '%.2f'|format(service_request.final_price) }}</p>
+                            {% endif %}
+                        </div>
+                        <div class="col-md-6">
+                            <p><strong>Status:</strong> 
+                                {% if service_request.status == 'requested' %}
+                                <span class="badge badge-warning">{{ service_request.status_display }}</span>
+                                {% elif service_request.status == 'scheduled' %}
+                                <span class="badge badge-info">{{ service_request.status_display }}</span>
+                                {% elif service_request.status == 'in_progress' %}
+                                <span class="badge badge-primary">{{ service_request.status_display }}</span>
+                                {% elif service_request.status == 'completed' %}
+                                <span class="badge badge-success">{{ service_request.status_display }}</span>
+                                {% elif service_request.status == 'cancelled' %}
+                                <span class="badge badge-danger">{{ service_request.status_display }}</span>
+                                {% endif %}
+                            </p>
+                            <p><strong>Pagamento:</strong> 
+                                {% if service_request.payment_status == 'pending' %}
+                                <span class="badge badge-warning">{{ service_request.payment_status_display }}</span>
+                                {% elif service_request.payment_status == 'paid' %}
+                                <span class="badge badge-success">{{ service_request.payment_status_display }}</span>
+                                {% else %}
+                                <span class="badge badge-secondary">{{ service_request.payment_status_display }}</span>
+                                {% endif %}
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Informações da Embarcação -->
+            <div class="card shadow mb-4">
+                <div class="card-header py-3">
+                    <h6 class="m-0 font-weight-bold text-primary">Informações da Embarcação</h6>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <p><strong>Nome:</strong> {{ service_request.vessel_name }}</p>
+                            <p><strong>Tipo:</strong> {{ service_request.vessel_type or 'Não informado' }}</p>
+                        </div>
+                        <div class="col-md-6">
+                            <p><strong>Comprimento:</strong> {{ service_request.vessel_length or 'Não informado' }} metros</p>
+                            <p><strong>Vaga:</strong> {{ service_request.berth.number if service_request.berth else 'Não informado' }}</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Agendamento -->
+            <div class="card shadow mb-4">
+                <div class="card-header py-3">
+                    <h6 class="m-0 font-weight-bold text-primary">Agendamento</h6>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <p><strong>Data Preferida:</strong> {{ service_request.preferred_date.strftime('%d/%m/%Y') }}</p>
+                            <p><strong>Horário Preferido:</strong> {{ service_request.preferred_time.strftime('%H:%M') }}</p>
+                        </div>
+                        <div class="col-md-6">
+                            {% if service_request.scheduled_date %}
+                            <p><strong>Data Agendada:</strong> {{ service_request.scheduled_date.strftime('%d/%m/%Y %H:%M') }}</p>
+                            {% endif %}
+                            {% if service_request.completed_date %}
+                            <p><strong>Data de Conclusão:</strong> {{ service_request.completed_date.strftime('%d/%m/%Y %H:%M') }}</p>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Observações -->
+            {% if service_request.notes or service_request.admin_notes %}
+            <div class="card shadow mb-4">
+                <div class="card-header py-3">
+                    <h6 class="m-0 font-weight-bold text-primary">Observações</h6>
+                </div>
+                <div class="card-body">
+                    {% if service_request.notes %}
+                    <p><strong>Suas observações:</strong></p>
+                    <p>{{ service_request.notes }}</p>
+                    {% endif %}
+                    
+                    {% if service_request.admin_notes %}
+                    <p><strong>Observações da marina:</strong></p>
+                    <p>{{ service_request.admin_notes }}</p>
+                    {% endif %}
+                </div>
+            </div>
+            {% endif %}
+        </div>
+        
+        <div class="col-lg-4">
+            <!-- Ações -->
+            <div class="card shadow mb-4">
+                <div class="card-header py-3">
+                    <h6 class="m-0 font-weight-bold text-primary">Ações</h6>
+                </div>
+                <div class="card-body">
+                    {% if service_request.status == 'requested' %}
+                    <form method="POST" action="{{ url_for('services.cancel_my_request', request_id=service_request.id) }}" 
+                          onsubmit="return confirm('Tem certeza que deseja cancelar esta solicitação?')">
+                        <button type="submit" class="btn btn-danger btn-block mb-2">
+                            <i class="fas fa-times"></i> Cancelar Solicitação
+                        </button>
+                    </form>
+                    {% endif %}
+                    
+                    {% if service_request.payment_status == 'pending' %}
+                    <button type="button" class="btn btn-success btn-block mb-2" onclick="createPayment({{ service_request.id }})">
+                        <i class="fas fa-credit-card"></i> Pagar
+                    </button>
+                    {% endif %}
+                </div>
+            </div>
+            
+            <!-- Informações de Contato -->
+            <div class="card shadow mb-4">
+                <div class="card-header py-3">
+                    <h6 class="m-0 font-weight-bold text-primary">Contato da Marina</h6>
+                </div>
+                <div class="card-body">
+                    <p><strong>Marina:</strong> {{ service_request.marina.name }}</p>
+                    {% if service_request.marina.phone %}
+                    <p><strong>Telefone:</strong> {{ service_request.marina.phone }}</p>
+                    {% endif %}
+                    {% if service_request.marina.email %}
+                    <p><strong>Email:</strong> {{ service_request.marina.email }}</p>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+function createPayment(requestId) {
+    fetch(`/services/api/requests/${requestId}/create-payment`, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        }
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            alert('Cobrança criada com sucesso! Verifique seu email ou app de pagamentos.');
+            window.location.reload();
+        } else {
+            alert('Erro ao criar cobrança: ' + data.error);
+        }
+    })
+    .catch(error => {
+        alert('Erro ao processar pagamento');
+    });
+}
+</script>
+{% endblock %} 

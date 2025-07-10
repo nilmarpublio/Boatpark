@@ -1,0 +1,255 @@
+{% extends "base.html" %}
+
+{% block title %}Mensagens em Massa{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h1 class="h3">
+                    <i class="fas fa-envelope"></i> Mensagens em Massa
+                </h1>
+                <a href="{{ url_for('admin.notifications') }}" class="btn btn-secondary">
+                    <i class="fas fa-arrow-left"></i> Voltar às Notificações
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-lg-8">
+            <div class="card shadow">
+                <div class="card-header py-3">
+                    <h6 class="m-0 font-weight-bold text-primary">Enviar Mensagem em Massa</h6>
+                </div>
+                <div class="card-body">
+                    <form method="POST" action="{{ url_for('admin.send_bulk_message') }}">
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label for="type" class="form-label">Tipo de Mensagem *</label>
+                                <select class="form-select" id="type" name="type" required>
+                                    <option value="notification">Notificação</option>
+                                    <option value="email">Email</option>
+                                </select>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label for="target_filter" class="form-label">Público-Alvo *</label>
+                                <select class="form-select" id="target_filter" name="target_filter" required>
+                                    <option value="all">Todos os usuários ativos</option>
+                                    <option value="subscribers">Apenas assinantes ativos</option>
+                                    <option value="admins">Apenas administradores</option>
+                                    <option value="custom">Usuários específicos</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="subject" class="form-label">Assunto</label>
+                            <input type="text" class="form-control" id="subject" name="subject" 
+                                   placeholder="Assunto da mensagem (opcional)">
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="message" class="form-label">Mensagem *</label>
+                            <textarea class="form-control" id="message" name="message" rows="8" 
+                                      placeholder="Digite sua mensagem..." required></textarea>
+                        </div>
+
+                        <div id="customUsersSection" class="mb-3" style="display: none;">
+                            <label class="form-label">Selecionar Usuários Específicos</label>
+                            <div class="border rounded p-3" style="max-height: 300px; overflow-y: auto;">
+                                <div class="mb-2">
+                                    <button type="button" class="btn btn-sm btn-outline-primary" onclick="selectAllUsers()">
+                                        Selecionar Todos
+                                    </button>
+                                    <button type="button" class="btn btn-sm btn-outline-secondary" onclick="deselectAllUsers()">
+                                        Desmarcar Todos
+                                    </button>
+                                </div>
+                                <div id="usersList">
+                                    <!-- Lista de usuários será carregada via AJAX -->
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="alert alert-info">
+                            <i class="fas fa-info-circle"></i>
+                            <strong>Informações:</strong>
+                            <ul class="mb-0 mt-2">
+                                <li><strong>Notificação:</strong> Aparece no painel do usuário</li>
+                                <li><strong>Email:</strong> Enviado para o email do usuário (requer configuração)</li>
+                                <li>A mensagem será enviada para todos os usuários do público-alvo selecionado</li>
+                                <li>Você pode personalizar o público-alvo conforme necessário</li>
+                            </ul>
+                        </div>
+
+                        <div class="d-flex justify-content-end">
+                            <a href="{{ url_for('admin.notifications') }}" class="btn btn-secondary me-2">
+                                Cancelar
+                            </a>
+                            <button type="submit" class="btn btn-success">
+                                <i class="fas fa-paper-plane"></i> Enviar Mensagem
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-lg-4">
+            <div class="card shadow mb-4">
+                <div class="card-header py-3">
+                    <h6 class="m-0 font-weight-bold text-primary">Estatísticas</h6>
+                </div>
+                <div class="card-body">
+                    <div class="row text-center">
+                        <div class="col-6">
+                            <div class="border-right">
+                                <div class="h4 text-primary" id="totalUsers">-</div>
+                                <div class="text-muted">Total de Usuários</div>
+                            </div>
+                        </div>
+                        <div class="col-6">
+                            <div class="h4 text-success" id="activeSubscribers">-</div>
+                            <div class="text-muted">Assinantes Ativos</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card shadow">
+                <div class="card-header py-3">
+                    <h6 class="m-0 font-weight-bold text-primary">Templates de Mensagem</h6>
+                </div>
+                <div class="card-body">
+                    <div class="mb-3">
+                        <h6>Lembrete de Pagamento</h6>
+                        <button type="button" class="btn btn-sm btn-outline-primary" onclick="loadTemplate('payment_reminder')">
+                            Usar Template
+                        </button>
+                    </div>
+                    <div class="mb-3">
+                        <h6>Manutenção Programada</h6>
+                        <button type="button" class="btn btn-sm btn-outline-primary" onclick="loadTemplate('maintenance')">
+                            Usar Template
+                        </button>
+                    </div>
+                    <div class="mb-3">
+                        <h6>Anúncio Geral</h6>
+                        <button type="button" class="btn btn-sm btn-outline-primary" onclick="loadTemplate('announcement')">
+                            Usar Template
+                        </button>
+                    </div>
+                    <div class="mb-3">
+                        <h6>Boas-vindas</h6>
+                        <button type="button" class="btn btn-sm btn-outline-primary" onclick="loadTemplate('welcome')">
+                            Usar Template
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+// Templates de mensagem
+const templates = {
+    payment_reminder: {
+        subject: 'Lembrete de Pagamento',
+        message: 'Olá!\n\nEste é um lembrete amigável sobre o pagamento da sua assinatura que vence em breve.\n\nPor favor, acesse sua área do usuário para realizar o pagamento e evitar a suspensão do serviço.\n\nEm caso de dúvidas, entre em contato conosco.\n\nAtenciosamente,\nEquipe da Marina'
+    },
+    maintenance: {
+        subject: 'Manutenção Programada',
+        message: 'Prezados usuários,\n\nInformamos que será realizada uma manutenção programada em nossa infraestrutura.\n\nData: [DATA]\nHorário: [HORÁRIO]\nDuração estimada: [DURAÇÃO]\n\nDurante este período, alguns serviços podem ficar temporariamente indisponíveis.\n\nPedimos desculpas pelo inconveniente.\n\nAtenciosamente,\nEquipe Técnica'
+    },
+    announcement: {
+        subject: 'Anúncio Importante',
+        message: 'Olá a todos!\n\nTemos uma novidade importante para compartilhar com vocês.\n\n[INSERIR CONTEÚDO DO ANÚNCIO]\n\nFiquem atentos para mais informações.\n\nAtenciosamente,\nEquipe da Marina'
+    },
+    welcome: {
+        subject: 'Bem-vindo à Marina!',
+        message: 'Olá!\n\nSeja bem-vindo(a) à nossa marina!\n\nEstamos muito felizes em tê-lo(a) conosco e esperamos que aproveite ao máximo nossos serviços.\n\nSe precisar de qualquer ajuda ou tiver dúvidas, não hesite em entrar em contato.\n\nBoa navegação!\n\nAtenciosamente,\nEquipe da Marina'
+    }
+};
+
+// Carregar template
+function loadTemplate(templateName) {
+    const template = templates[templateName];
+    if (template) {
+        document.getElementById('subject').value = template.subject;
+        document.getElementById('message').value = template.message;
+    }
+}
+
+// Mostrar/ocultar seção de usuários específicos
+document.getElementById('target_filter').addEventListener('change', function() {
+    const customSection = document.getElementById('customUsersSection');
+    if (this.value === 'custom') {
+        customSection.style.display = 'block';
+        loadUsers();
+    } else {
+        customSection.style.display = 'none';
+    }
+});
+
+// Carregar lista de usuários via AJAX
+function loadUsers() {
+    fetch('/admin/api/users')
+        .then(response => response.json())
+        .then(data => {
+            const usersList = document.getElementById('usersList');
+            usersList.innerHTML = '';
+            
+            data.users.forEach(user => {
+                const div = document.createElement('div');
+                div.className = 'form-check';
+                div.innerHTML = `
+                    <input class="form-check-input" type="checkbox" 
+                           id="user_${user.id}" name="custom_users" value="${user.id}">
+                    <label class="form-check-label" for="user_${user.id}">
+                        ${user.full_name} (${user.email})
+                        ${user.is_admin ? '<span class="badge badge-danger">Admin</span>' : ''}
+                    </label>
+                `;
+                usersList.appendChild(div);
+            });
+        })
+        .catch(error => {
+            console.error('Erro ao carregar usuários:', error);
+            document.getElementById('usersList').innerHTML = '<p class="text-muted">Erro ao carregar usuários</p>';
+        });
+}
+
+// Selecionar todos os usuários
+function selectAllUsers() {
+    const checkboxes = document.querySelectorAll('#customUsersSection input[type="checkbox"]');
+    checkboxes.forEach(checkbox => checkbox.checked = true);
+}
+
+// Desmarcar todos os usuários
+function deselectAllUsers() {
+    const checkboxes = document.querySelectorAll('#customUsersSection input[type="checkbox"]');
+    checkboxes.forEach(checkbox => checkbox.checked = false);
+}
+
+// Carregar estatísticas
+function loadStats() {
+    fetch('/admin/api/stats')
+        .then(response => response.json())
+        .then(data => {
+            document.getElementById('totalUsers').textContent = data.total_users || 0;
+            document.getElementById('activeSubscribers').textContent = data.total_subscriptions || 0;
+        })
+        .catch(error => {
+            console.error('Erro ao carregar estatísticas:', error);
+        });
+}
+
+// Carregar dados na inicialização
+document.addEventListener('DOMContentLoaded', function() {
+    loadStats();
+});
+</script>
+{% endblock %} 

@@ -1,0 +1,302 @@
+{% extends "base.html" %}
+
+{% block title %}Detalhes do Usuário - {{ user.full_name }}{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h1 class="h3">
+                    <i class="fas fa-user"></i> Detalhes do Usuário
+                </h1>
+                <div>
+                    <a href="{{ url_for('admin.user_subscription_new', user_id=user.id) }}"
+                        class="btn btn-success me-2">
+                        <i class="fas fa-plus"></i> Nova Assinatura
+                    </a>
+                    <a href="{{ url_for('admin.user_edit', user_id=user.id) }}" class="btn btn-warning me-2">
+                        <i class="fas fa-edit"></i> Editar
+                    </a>
+                    <a href="{{ url_for('admin.users') }}" class="btn btn-secondary">
+                        <i class="fas fa-arrow-left"></i> Voltar à Lista
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <!-- Informações Básicas -->
+        <div class="col-lg-6">
+            <div class="card shadow mb-4">
+                <div class="card-header py-3">
+                    <h6 class="m-0 font-weight-bold text-primary">Informações Básicas</h6>
+                </div>
+                <div class="card-body">
+                    <table class="table table-borderless">
+                        <tr>
+                            <td><strong>ID:</strong></td>
+                            <td>{{ user.id }}</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Nome:</strong></td>
+                            <td>{{ user.full_name }}</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Email:</strong></td>
+                            <td>{{ user.email }}</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Telefone:</strong></td>
+                            <td>{{ user.phone or 'Não informado' }}</td>
+                        </tr>
+                        <tr>
+                            <td><strong>CPF:</strong></td>
+                            <td>{{ user.cpf or 'Não informado' }}</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Tipo de Usuário:</strong></td>
+                            <td>
+                                {% if user.user_type == 'superadmin' %}
+                                <span class="badge bg-danger">Super Administrador</span>
+                                {% elif user.user_type == 'admin' %}
+                                <span class="badge bg-warning">Administrador</span>
+                                {% else %}
+                                <span class="badge bg-primary">Usuário</span>
+                                {% endif %}
+                            </td>
+                        </tr>
+                        <tr>
+                            <td><strong>Status:</strong></td>
+                            <td>
+                                {% if user.is_active %}
+                                <span class="badge badge-success">Ativo</span>
+                                {% else %}
+                                <span class="badge badge-warning">Inativo</span>
+                                {% endif %}
+                            </td>
+                        </tr>
+                        <tr>
+                            <td><strong>Plano Ativo:</strong></td>
+                            <td>
+                                {% if user.active_subscription and user.active_subscription.plan %}
+                                <span class="badge badge-primary">{{ user.active_subscription.plan.display_name
+                                    }}</span>
+                                {% elif user.active_subscription %}
+                                <span class="badge badge-secondary">Plano não definido</span>
+                                {% else %}
+                                <span class="badge badge-warning">Sem assinatura</span>
+                                {% endif %}
+                            </td>
+                        </tr>
+                        <tr>
+                            <td><strong>Data de Registro:</strong></td>
+                            <td>{{ user.created_at.strftime('%d/%m/%Y %H:%M') }}</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Último Login:</strong></td>
+                            <td>{{ user.last_login.strftime('%d/%m/%Y %H:%M') if user.last_login else 'Nunca' }}</td>
+                        </tr>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- Endereço -->
+        <div class="col-lg-6">
+            <div class="card shadow mb-4">
+                <div class="card-header py-3">
+                    <h6 class="m-0 font-weight-bold text-primary">Endereço</h6>
+                </div>
+                <div class="card-body">
+                    {% if user.address or user.city or user.state %}
+                    <table class="table table-borderless">
+                        <tr>
+                            <td><strong>Endereço:</strong></td>
+                            <td>{{ user.address or 'Não informado' }}</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Cidade:</strong></td>
+                            <td>{{ user.city or 'Não informado' }}</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Estado:</strong></td>
+                            <td>{{ user.state or 'Não informado' }}</td>
+                        </tr>
+                        <tr>
+                            <td><strong>CEP:</strong></td>
+                            <td>{{ user.zip_code or 'Não informado' }}</td>
+                        </tr>
+                        <tr>
+                            <td><strong>País:</strong></td>
+                            <td>{{ user.country or 'Brasil' }}</td>
+                        </tr>
+                    </table>
+                    {% else %}
+                    <p class="text-muted">Endereço não informado.</p>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Assinaturas -->
+    <div class="row">
+        <div class="col-12">
+            <div class="card shadow mb-4">
+                <div class="card-header py-3">
+                    <h6 class="m-0 font-weight-bold text-primary">Assinaturas</h6>
+                </div>
+                <div class="card-body">
+                    {% if subscriptions %}
+                    <div class="table-responsive">
+                        <table class="table table-bordered" width="100%" cellspacing="0">
+                            <thead>
+                                <tr>
+                                    <th>Marina</th>
+                                    <th>Vaga</th>
+                                    <th>Data de Início</th>
+                                    <th>Data de Fim</th>
+                                    <th>Status</th>
+                                    <th>Valor</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for subscription in subscriptions %}
+                                <tr>
+                                    <td>{{ subscription.berth.marina.name }}</td>
+                                    <td>{{ subscription.berth.berth_number }}</td>
+                                    <td>{{ subscription.start_date.strftime('%d/%m/%Y') }}</td>
+                                    <td>{{ subscription.end_date.strftime('%d/%m/%Y') }}</td>
+                                    <td>
+                                        {% if subscription.is_active %}
+                                        <span class="badge badge-success">Ativa</span>
+                                        {% else %}
+                                        <span class="badge badge-secondary">Inativa</span>
+                                        {% endif %}
+                                    </td>
+                                    <td>R$ {{ "%.2f"|format(subscription.amount) }}</td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                    {% else %}
+                    <p class="text-muted">Nenhuma assinatura encontrada.</p>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Embarcações -->
+    <div class="row">
+        <div class="col-12">
+            <div class="card shadow mb-4">
+                <div class="card-header py-3">
+                    <h6 class="m-0 font-weight-bold text-primary">Embarcações</h6>
+                </div>
+                <div class="card-body">
+                    {% if user.vessels %}
+                    <div class="table-responsive">
+                        <table class="table table-bordered" width="100%" cellspacing="0">
+                            <thead>
+                                <tr>
+                                    <th>Nome</th>
+                                    <th>Tipo</th>
+                                    <th>Marca/Modelo</th>
+                                    <th>Dimensões</th>
+                                    <th>Registro</th>
+                                    <th>Status</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for vessel in user.vessels %}
+                                <tr>
+                                    <td>{{ vessel.name }}</td>
+                                    <td>{{ vessel.type }}</td>
+                                    <td>{{ vessel.brand }} {{ vessel.model }}</td>
+                                    <td>{{ vessel.dimensions_str }}</td>
+                                    <td>
+                                        {% if vessel.registration_number %}
+                                        {{ vessel.registration_number }}
+                                        {% if vessel.is_registration_expired %}
+                                        <span class="badge badge-danger">Expirado</span>
+                                        {% endif %}
+                                        {% else %}
+                                        Não informado
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        {% if vessel.is_active %}
+                                        <span class="badge badge-success">Ativa</span>
+                                        {% else %}
+                                        <span class="badge badge-secondary">Inativa</span>
+                                        {% endif %}
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                    {% else %}
+                    <p class="text-muted">Nenhuma embarcação cadastrada.</p>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Pagamentos -->
+    <div class="row">
+        <div class="col-12">
+            <div class="card shadow mb-4">
+                <div class="card-header py-3">
+                    <h6 class="m-0 font-weight-bold text-primary">Histórico de Pagamentos</h6>
+                </div>
+                <div class="card-body">
+                    {% if payments %}
+                    <div class="table-responsive">
+                        <table class="table table-bordered" width="100%" cellspacing="0">
+                            <thead>
+                                <tr>
+                                    <th>Data</th>
+                                    <th>Valor</th>
+                                    <th>Status</th>
+                                    <th>Método</th>
+                                    <th>Referência</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for payment in payments %}
+                                <tr>
+                                    <td>{{ payment.created_at.strftime('%d/%m/%Y %H:%M') }}</td>
+                                    <td>R$ {{ "%.2f"|format(payment.amount) }}</td>
+                                    <td>
+                                        {% if payment.status == 'confirmed' %}
+                                        <span class="badge badge-success">Confirmado</span>
+                                        {% elif payment.status == 'pending' %}
+                                        <span class="badge badge-warning">Pendente</span>
+                                        {% elif payment.status == 'cancelled' %}
+                                        <span class="badge badge-danger">Cancelado</span>
+                                        {% else %}
+                                        <span class="badge badge-secondary">{{ payment.status }}</span>
+                                        {% endif %}
+                                    </td>
+                                    <td>{{ payment.payment_method or 'N/A' }}</td>
+                                    <td>{{ payment.asaas_payment_id or 'N/A' }}</td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                    {% else %}
+                    <p class="text-muted">Nenhum pagamento encontrado.</p>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

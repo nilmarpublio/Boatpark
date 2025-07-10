@@ -1,0 +1,15 @@
+services:
+  - type: web
+    name: boathouse
+    env: python
+    buildCommand: pip install -r requirements-render.txt
+    startCommand: gunicorn --bind 0.0.0.0:$PORT --workers 1 --timeout 120 run:app
+    envVars:
+      - key: SECRET_KEY
+        value: boathouse_secret_key_2024_very_secure_32_chars
+      - key: FLASK_ENV
+        value: production
+      - key: FLASK_DEBUG
+        value: false
+      - key: DATABASE_URI
+        value: sqlite:///boathouse.db 

@@ -1,0 +1,162 @@
+{% extends "base.html" %}
+
+{% block title %}{{ document.document_name }}{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1 class="h3">
+            <i class="fas fa-file-alt"></i> {{ document.document_name }}
+        </h1>
+        <div class="btn-group">
+            <a href="{{ url_for('documents.edit', document_id=document.id) }}" class="btn btn-warning">
+                <i class="fas fa-edit"></i> Editar
+            </a>
+            <a href="{{ url_for('documents.index') }}" class="btn btn-secondary">
+                <i class="fas fa-arrow-left"></i> Voltar
+            </a>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-lg-8">
+            <!-- Informações do Documento -->
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h5 class="mb-0"><i class="fas fa-info-circle"></i> Informações do Documento</h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <table class="table table-borderless">
+                                <tr>
+                                    <td><strong>Tipo:</strong></td>
+                                    <td>{{ document.document_type }}</td>
+                                </tr>
+                                <tr>
+                                    <td><strong>Número:</strong></td>
+                                    <td>{{ document.document_number or 'Não informado' }}</td>
+                                </tr>
+                                <tr>
+                                    <td><strong>Órgão Emissor:</strong></td>
+                                    <td>{{ document.issuing_authority or 'Não informado' }}</td>
+                                </tr>
+                            </table>
+                        </div>
+                        <div class="col-md-6">
+                            <table class="table table-borderless">
+                                <tr>
+                                    <td><strong>Data de Emissão:</strong></td>
+                                    <td>{{ document.issue_date.strftime('%d/%m/%Y') if document.issue_date else 'Não informado' }}</td>
+                                </tr>
+                                <tr>
+                                    <td><strong>Data de Expiração:</strong></td>
+                                    <td>
+                                        {{ document.expiry_date.strftime('%d/%m/%Y') if document.expiry_date else 'Não informado' }}
+                                        {% if document.is_expired %}
+                                        <span class="badge badge-danger">Expirado</span>
+                                        {% endif %}
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td><strong>Status:</strong></td>
+                                    <td>
+                                        {% if document.status == 'Ativo' %}
+                                        <span class="badge badge-success">{{ document.status }}</span>
+                                        {% elif document.status == 'Expirado' %}
+                                        <span class="badge badge-danger">{{ document.status }}</span>
+                                        {% elif document.status == 'Pendente' %}
+                                        <span class="badge badge-warning">{{ document.status }}</span>
+                                        {% else %}
+                                        <span class="badge badge-secondary">{{ document.status }}</span>
+                                        {% endif %}
+                                    </td>
+                                </tr>
+                            </table>
+                        </div>
+                    </div>
+
+                    {% if document.description %}
+                    <div class="mt-3">
+                        <strong>Descrição:</strong>
+                        <p class="mt-2">{{ document.description }}</p>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+
+
+        </div>
+
+        <div class="col-lg-4">
+            <!-- Categorização -->
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h5 class="mb-0"><i class="fas fa-tags"></i> Categorização</h5>
+                </div>
+                <div class="card-body">
+                    <table class="table table-borderless">
+                        <tr>
+                            <td><strong>Categoria:</strong></td>
+                            <td>{{ document.category or 'Não definida' }}</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Prioridade:</strong></td>
+                            <td>
+                                {% if document.priority == 'Baixa' %}
+                                <span class="badge badge-success">{{ document.priority }}</span>
+                                {% elif document.priority == 'Média' %}
+                                <span class="badge badge-warning">{{ document.priority }}</span>
+                                {% elif document.priority == 'Alta' %}
+                                <span class="badge badge-danger">{{ document.priority }}</span>
+                                {% else %}
+                                <span class="badge badge-dark">{{ document.priority }}</span>
+                                {% endif %}
+                            </td>
+                        </tr>
+                        <tr>
+                            <td><strong>Lembretes:</strong></td>
+                            <td>{{ document.reminder_days }} dias antes</td>
+                        </tr>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Informações do Sistema -->
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h5 class="mb-0"><i class="fas fa-database"></i> Informações do Sistema</h5>
+                </div>
+                <div class="card-body">
+                    <table class="table table-borderless">
+                        <tr>
+                            <td><strong>ID:</strong></td>
+                            <td>{{ document.id }}</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Criado em:</strong></td>
+                            <td>{{ document.created_at.strftime('%d/%m/%Y %H:%M') }}</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Atualizado em:</strong></td>
+                            <td>{{ document.updated_at.strftime('%d/%m/%Y %H:%M') }}</td>
+                        </tr>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Notas -->
+            {% if document.notes %}
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h5 class="mb-0"><i class="fas fa-sticky-note"></i> Notas</h5>
+                </div>
+                <div class="card-body">
+                    <p>{{ document.notes }}</p>
+                </div>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %} 
