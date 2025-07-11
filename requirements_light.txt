@@ -1,0 +1,32 @@
+# ========================================
+# REQUIREMENTS LIGHTWEIGHT - PYTHONANYWHERE
+# ========================================
+
+# Flask e extensões essenciais
+Flask==2.2.5
+Flask-SQLAlchemy==3.0.5
+Flask-Login==0.6.3
+Flask-Migrate==4.0.5
+Flask-WTF==1.1.1
+Flask-Mail==0.10.0
+
+# Banco de dados (apenas MySQL)
+PyMySQL==1.1.0
+SQLAlchemy==2.0.35
+alembic==1.16.2
+
+# Segurança essencial
+bcrypt==4.0.1
+email-validator==2.0.0
+
+# Utilitários básicos
+python-dotenv==1.0.0
+requests==2.31.0
+
+# Dependências Flask
+Werkzeug==2.2.3
+Jinja2==3.0.3
+click==8.1.7
+itsdangerous==2.1.2
+blinker==1.8.2
+markupsafe==2.1.3 
