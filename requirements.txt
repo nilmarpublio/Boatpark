@@ -1,5 +1,5 @@
 # ========================================
-# REQUIREMENTS BOATPARK - PYTHONANYWHERE
+# REQUIREMENTS BOATPARK - HEROKU
 # ========================================
 
 # Flask e extensões
@@ -10,15 +10,14 @@ Flask-Migrate==4.0.5
 Flask-WTF==1.1.1
 Flask-Mail==0.10.0
 
-# Banco de dados
+# Banco de dados (PostgreSQL para Heroku)
 psycopg2-binary==2.9.10
-PyMySQL==1.1.0
-cryptography==41.0.7
 SQLAlchemy==2.0.35
 alembic==1.16.2
 
 # Segurança e autenticação
 bcrypt==4.0.1
+cryptography==41.0.7
 email-validator==2.0.0
 
 # Utilitários

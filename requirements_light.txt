@@ -1,7 +1,6 @@
 # ========================================
 # REQUIREMENTS LIGHTWEIGHT - PYTHONANYWHERE
 # ========================================
-
 # Flask e extensões essenciais
 Flask==2.2.5
 Flask-SQLAlchemy==3.0.5
@@ -29,4 +28,4 @@ Jinja2==3.0.3
 click==8.1.7
 itsdangerous==2.1.2
 blinker==1.8.2
-markupsafe==2.1.3 
+markupsafe==2.1.3
