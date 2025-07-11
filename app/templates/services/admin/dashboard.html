@@ -1,0 +1,91 @@
+{% extends "base.html" %}
+
+{% block title %}Dashboard de Serviços{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <h1 class="h3 mb-4"><i class="fas fa-tools"></i> Dashboard de Serviços</h1>
+    <div class="row mb-4">
+        <div class="col-md-3">
+            <div class="card border-left-primary shadow h-100 py-2">
+                <div class="card-body">
+                    <div class="text-xs font-weight-bold text-primary text-uppercase mb-1">Tipos de Serviços</div>
+                    <div class="h5 mb-0 font-weight-bold text-gray-800">{{ total_services }}</div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card border-left-info shadow h-100 py-2">
+                <div class="card-body">
+                    <div class="text-xs font-weight-bold text-info text-uppercase mb-1">Solicitações</div>
+                    <div class="h5 mb-0 font-weight-bold text-gray-800">{{ total_requests }}</div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card border-left-warning shadow h-100 py-2">
+                <div class="card-body">
+                    <div class="text-xs font-weight-bold text-warning text-uppercase mb-1">Pendentes</div>
+                    <div class="h5 mb-0 font-weight-bold text-gray-800">{{ pending_requests }}</div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card border-left-success shadow h-100 py-2">
+                <div class="card-body">
+                    <div class="text-xs font-weight-bold text-success text-uppercase mb-1">Receita Total</div>
+                    <div class="h5 mb-0 font-weight-bold text-gray-800">R$ {{ '%.2f'|format(total_revenue) }}</div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="row">
+        <div class="col-12">
+            <div class="card shadow mb-4">
+                <div class="card-header py-3 d-flex flex-row align-items-center justify-content-between">
+                    <h6 class="m-0 font-weight-bold text-primary">Solicitações Recentes</h6>
+                    <a href="{{ url_for('services.admin_requests') }}" class="btn btn-sm btn-primary">Ver Todas</a>
+                </div>
+                <div class="card-body">
+                    {% if recent_requests %}
+                    <div class="table-responsive">
+                        <table class="table table-bordered">
+                            <thead>
+                                <tr>
+                                    <th>ID</th>
+                                    <th>Cliente</th>
+                                    <th>Serviço</th>
+                                    <th>Embarcação</th>
+                                    <th>Status</th>
+                                    <th>Data</th>
+                                    <th>Ações</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for req in recent_requests %}
+                                <tr>
+                                    <td>{{ req.id }}</td>
+                                    <td>{{ req.user.full_name }}</td>
+                                    <td>{{ req.service.name }}</td>
+                                    <td>{{ req.vessel_name }}</td>
+                                    <td>{{ req.status_display }}</td>
+                                    <td>{{ req.created_at.strftime('%d/%m/%Y %H:%M') }}</td>
+                                    <td>
+                                        <a href="{{ url_for('services.admin_request_detail', request_id=req.id) }}" class="btn btn-sm btn-info">
+                                            <i class="fas fa-eye"></i> Ver
+                                        </a>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                    {% else %}
+                    <p class="text-muted">Nenhuma solicitação recente.</p>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %} 

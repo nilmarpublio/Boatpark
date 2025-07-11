@@ -1,0 +1,11 @@
+[phases.setup]
+nixPkgs = ["python311", "gcc", "postgresql"]
+
+[phases.install]
+cmds = ["pip install -r requirements-production.txt", "pip install gunicorn"]
+
+[phases.build]
+cmds = ["echo 'Build completed'", "chmod +x start.sh"]
+
+[start]
+cmd = "./start.sh" 

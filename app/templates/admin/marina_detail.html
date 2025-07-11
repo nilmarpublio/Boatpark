@@ -1,0 +1,369 @@
+{% extends "base.html" %}
+
+{% block title %}{{ marina.name }} - Detalhes da Marina{% endblock %}
+
+{% block extra_head %}
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<style>
+    #marina-map {
+        height: 400px;
+        width: 100%;
+        border-radius: 8px;
+    }
+
+    .photo-gallery {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+        gap: 15px;
+        margin-top: 20px;
+    }
+
+    .photo-item {
+        position: relative;
+        border-radius: 8px;
+        overflow: hidden;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    }
+
+    .photo-item img {
+        width: 100%;
+        height: 150px;
+        object-fit: cover;
+    }
+
+    .photo-overlay {
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: rgba(0, 0, 0, 0.5);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        opacity: 0;
+        transition: opacity 0.3s;
+    }
+
+    .photo-item:hover .photo-overlay {
+        opacity: 1;
+    }
+
+    .berth-type-card {
+        border-left: 4px solid #007bff;
+        margin-bottom: 15px;
+    }
+
+    .amenities-list {
+        list-style: none;
+        padding: 0;
+    }
+
+    .amenities-list li {
+        padding: 5px 0;
+        border-bottom: 1px solid #eee;
+    }
+
+    .amenities-list li:before {
+        content: "✓";
+        color: #28a745;
+        font-weight: bold;
+        margin-right: 10px;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h1 class="h3">
+                    <i class="fas fa-anchor"></i> {{ marina.name }}
+                </h1>
+                <div>
+                    <a href="{{ url_for('admin.berth_visualization', marina_id=marina.id) }}" class="btn btn-info">
+                        <i class="fas fa-th"></i> Visualizar Vagas
+                    </a>
+                    <a href="{{ url_for('admin.marina_edit', marina_id=marina.id) }}" class="btn btn-primary">
+                        <i class="fas fa-edit"></i> Editar Marina
+                    </a>
+                    <a href="{{ url_for('admin.marinas') }}" class="btn btn-secondary">
+                        <i class="fas fa-arrow-left"></i> Voltar à Lista
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Informações Principais -->
+    <div class="row">
+        <div class="col-lg-8">
+            <!-- Foto de Capa -->
+            {% if marina.cover_photo_url %}
+            <div class="card mb-4">
+                <img src="{{ marina.cover_photo_url }}" class="card-img-top" alt="{{ marina.name }}"
+                    style="height: 300px; object-fit: cover;">
+            </div>
+            {% endif %}
+
+            <!-- Mapa -->
+            {% if marina.latitude and marina.longitude %}
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h5 class="mb-0"><i class="fas fa-map-marker-alt"></i> Localização</h5>
+                </div>
+                <div class="card-body">
+                    <div id="marina-map"></div>
+                    <p class="mt-3 mb-0">
+                        <strong>Endereço:</strong> {{ marina.full_address }}
+                    </p>
+                </div>
+            </div>
+            {% endif %}
+
+            <!-- Descrição -->
+            {% if marina.description %}
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h5 class="mb-0"><i class="fas fa-info-circle"></i> Sobre a Marina</h5>
+                </div>
+                <div class="card-body">
+                    {{ marina.description|replace('\n', '<br>')|safe }}
+                </div>
+            </div>
+            {% endif %}
+
+            <!-- Galeria de Fotos -->
+            {% if marina.photos_list %}
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h5 class="mb-0"><i class="fas fa-images"></i> Galeria de Fotos</h5>
+                </div>
+                <div class="card-body">
+                    <div class="photo-gallery">
+                        {% for photo in marina.photos_list %}
+                        <div class="photo-item">
+                            <img src="{{ photo }}" alt="Foto da marina">
+                            <div class="photo-overlay">
+                                <button class="btn btn-light btn-sm" onclick="openPhotoModal('{{ photo }}')">
+                                    <i class="fas fa-expand"></i>
+                                </button>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+            {% endif %}
+
+            <!-- Tipos de Vagas -->
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h5 class="mb-0"><i class="fas fa-ship"></i> Tipos de Vagas</h5>
+                </div>
+                <div class="card-body">
+                    {% set berth_types = marina.berth_types_summary %}
+                    {% if berth_types %}
+                    {% for berth_type, info in berth_types.items() %}
+                    <div class="card berth-type-card">
+                        <div class="card-body">
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <h6 class="card-title">{{ berth_type|title }}</h6>
+                                    <p class="card-text">
+                                        <strong>Total:</strong> {{ info.total }} vagas<br>
+                                        <strong>Disponíveis:</strong> {{ info.available }} vagas
+                                    </p>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="progress">
+                                        <div class="progress-bar" role="progressbar"
+                                            style="width: {{ (info.available / info.total * 100)|round(1) }}%">
+                                            {{ (info.available / info.total * 100)|round(1) }}%
+                                        </div>
+                                    </div>
+                                    <small class="text-muted">Taxa de disponibilidade</small>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    {% endfor %}
+                    {% else %}
+                    <p class="text-muted">Nenhuma vaga cadastrada ainda.</p>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+        <div class="col-lg-4">
+            <!-- Informações de Contato -->
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h5 class="mb-0"><i class="fas fa-phone"></i> Contato</h5>
+                </div>
+                <div class="card-body">
+                    {% if marina.phone %}
+                    <p><strong>Telefone:</strong> {{ marina.phone }}</p>
+                    {% endif %}
+                    {% if marina.email %}
+                    <p><strong>Email:</strong> <a href="mailto:{{ marina.email }}">{{ marina.email }}</a></p>
+                    {% endif %}
+                    {% if marina.website %}
+                    <p><strong>Website:</strong> <a href="{{ marina.website }}" target="_blank">{{ marina.website }}</a>
+                    </p>
+                    {% endif %}
+                    {% if marina.contact_person %}
+                    <p><strong>Contato:</strong> {{ marina.contact_person }}</p>
+                    {% endif %}
+                    {% if marina.emergency_phone %}
+                    <p><strong>Emergência:</strong> {{ marina.emergency_phone }}</p>
+                    {% endif %}
+                </div>
+            </div>
+
+            <!-- Estatísticas -->
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h5 class="mb-0"><i class="fas fa-chart-bar"></i> Estatísticas</h5>
+                </div>
+                <div class="card-body">
+                    <div class="row text-center">
+                        <div class="col-6">
+                            <h4 class="text-primary">{{ marina.max_berths }}</h4>
+                            <small class="text-muted">Total de Vagas</small>
+                        </div>
+                        <div class="col-6">
+                            <h4 class="text-success">{{ marina.available_berths }}</h4>
+                            <small class="text-muted">Disponíveis</small>
+                        </div>
+                    </div>
+                    <hr>
+                    <div class="text-center">
+                        <h4 class="text-info">{{ marina.occupancy_rate|round(1) }}%</h4>
+                        <small class="text-muted">Taxa de Ocupação</small>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Horários de Funcionamento -->
+            {% if marina.opening_hours_dict %}
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h5 class="mb-0"><i class="fas fa-clock"></i> Horários</h5>
+                </div>
+                <div class="card-body">
+                    {% for day, hours in marina.opening_hours_dict.items() %}
+                    <p class="mb-1">
+                        <strong>{{ day }}:</strong> {{ hours }}
+                    </p>
+                    {% endfor %}
+                </div>
+            </div>
+            {% endif %}
+
+            <!-- Comodidades -->
+            {% if marina.amenities_list %}
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h5 class="mb-0"><i class="fas fa-star"></i> Comodidades</h5>
+                </div>
+                <div class="card-body">
+                    <ul class="amenities-list">
+                        {% for amenity in marina.amenities_list %}
+                        <li>{{ amenity }}</li>
+                        {% endfor %}
+                    </ul>
+                </div>
+            </div>
+            {% endif %}
+
+            <!-- Serviços -->
+            {% if marina.services_list %}
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h5 class="mb-0"><i class="fas fa-tools"></i> Serviços</h5>
+                </div>
+                <div class="card-body">
+                    <ul class="amenities-list">
+                        {% for service in marina.services_list %}
+                        <li>{{ service }}</li>
+                        {% endfor %}
+                    </ul>
+                </div>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<!-- Modal para visualizar fotos -->
+<div class="modal fade" id="photoModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Foto da Marina</h5>
+                <button type="button" class="close" data-dismiss="modal">
+                    <span>&times;</span>
+                </button>
+            </div>
+            <div class="modal-body text-center">
+                <img id="modalPhoto" src="" alt="Foto da marina" style="max-width: 100%;">
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal personalizado para fotos -->
+<div id="photoModalCustom" class="photo-modal">
+    <span class="photo-modal-close" onclick="closePhotoModal()">&times;</span>
+    <div class="photo-modal-content">
+        <img id="modalPhotoCustom" src="" alt="Foto da marina">
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+    // Inicializar mapa
+    {% if marina.latitude and marina.longitude %}
+    var map = L.map('marina-map').setView([{{ marina.latitude }}, { { marina.longitude } }], { { marina.map_zoom } });
+
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        attribution: '© OpenStreetMap contributors'
+    }).addTo(map);
+
+    L.marker([{{ marina.latitude }}, {{ marina.longitude }}])
+        .addTo(map)
+        .bindPopup('<strong>{{ marina.name }}</strong><br>{{ marina.full_address }}');
+    {% endif %}
+
+    // Função para abrir modal de foto personalizado
+    function openPhotoModal(photoUrl) {
+        document.getElementById('modalPhotoCustom').src = photoUrl;
+        document.getElementById('photoModalCustom').style.display = 'block';
+        document.body.style.overflow = 'hidden'; // Previne scroll
+    }
+
+    // Função para fechar modal de foto
+    function closePhotoModal() {
+        document.getElementById('photoModalCustom').style.display = 'none';
+        document.body.style.overflow = 'auto'; // Restaura scroll
+    }
+
+    // Fechar modal ao clicar fora da imagem
+    document.getElementById('photoModalCustom').addEventListener('click', function (e) {
+        if (e.target === this) {
+            closePhotoModal();
+        }
+    });
+
+    // Fechar modal com tecla ESC
+    document.addEventListener('keydown', function (e) {
+        if (e.key === 'Escape') {
+            closePhotoModal();
+        }
+    });
+</script>
+{% endblock %}

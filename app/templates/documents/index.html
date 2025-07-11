@@ -1,0 +1,82 @@
+{% extends "base.html" %}
+
+{% block title %}Meus Documentos{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1 class="h3">
+            <i class="fas fa-file-alt"></i> Meus Documentos
+        </h1>
+        <a href="{{ url_for('documents.new') }}" class="btn btn-success">
+            <i class="fas fa-plus"></i> Novo Documento
+        </a>
+    </div>
+
+    {% if documents %}
+    <div class="row">
+        {% for document in documents %}
+        <div class="col-lg-4 col-md-6 mb-4">
+            <div class="card shadow h-100">
+                <div class="card-body">
+                    <div class="d-flex align-items-center mb-3">
+                        <div class="flex-shrink-0">
+                            {% if document.document_type == 'Licença Náutica' %}
+                            <i class="fas fa-id-card fa-2x text-primary"></i>
+                            {% elif document.document_type == 'Registro da Embarcação' %}
+                            <i class="fas fa-ship fa-2x text-info"></i>
+                            {% elif document.document_type == 'Seguro' %}
+                            <i class="fas fa-shield-alt fa-2x text-success"></i>
+                            {% elif document.document_type == 'Documento de Identidade' %}
+                            <i class="fas fa-id-badge fa-2x text-warning"></i>
+                            {% else %}
+                            <i class="fas fa-file fa-2x text-secondary"></i>
+                            {% endif %}
+                        </div>
+                        <div class="flex-grow-1 ms-3">
+                            <h5 class="card-title mb-1">{{ document.document_name }}</h5>
+                            <p class="text-muted mb-0">{{ document.document_type }}</p>
+                        </div>
+                    </div>
+                    
+                    <p class="card-text">
+                        <strong>Número:</strong> {{ document.document_number or 'Não informado' }}<br>
+                        {% if document.expiry_date %}
+                        <strong>Expira em:</strong> {{ document.expiry_date.strftime('%d/%m/%Y') }}
+                        {% if document.is_expired %}
+                        <span class="badge badge-danger">Expirado</span>
+                        {% endif %}
+                        {% endif %}
+                        {% if document.description %}
+                        <br><strong>Descrição:</strong> {{ document.description[:50] }}{% if document.description|length > 50 %}...{% endif %}
+                        {% endif %}
+                    </p>
+                    
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div class="btn-group">
+                            <a href="{{ url_for('documents.detail', document_id=document.id) }}" class="btn btn-sm btn-info">
+                                <i class="fas fa-eye"></i> Ver
+                            </a>
+                            <a href="{{ url_for('documents.edit', document_id=document.id) }}" class="btn btn-sm btn-warning">
+                                <i class="fas fa-edit"></i> Editar
+                            </a>
+                        </div>
+                        <small class="text-muted">{{ document.created_at.strftime('%d/%m/%Y') }}</small>
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+    {% else %}
+    <div class="text-center py-5">
+        <i class="fas fa-file-alt fa-3x text-muted mb-3"></i>
+        <h5 class="text-muted">Nenhum documento cadastrado</h5>
+        <p class="text-muted">Cadastre seus documentos para manter tudo organizado.</p>
+        <a href="{{ url_for('documents.new') }}" class="btn btn-primary">
+            <i class="fas fa-plus"></i> Cadastrar Documento
+        </a>
+    </div>
+    {% endif %}
+</div>
+{% endblock %} 

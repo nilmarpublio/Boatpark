@@ -1,0 +1,123 @@
+{% extends "base.html" %}
+
+{% block title %}Planos de Assinatura{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h1 class="h3">
+                    <i class="fas fa-crown"></i> Planos de Assinatura
+                </h1>
+                <a href="{{ url_for('admin.index') }}" class="btn btn-secondary">
+                    <i class="fas fa-arrow-left"></i> Voltar ao Dashboard
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <!-- Debug info -->
+    <div class="alert alert-info">
+        <strong>Debug:</strong> Total de planos encontrados: {{ plans|length }}
+        {% if plans %}
+        <br>Planos: 
+        {% for plan in plans %}
+            {{ plan.name }} ({{ plan.display_name }})
+            {% if not loop.last %}, {% endif %}
+        {% endfor %}
+        {% endif %}
+    </div>
+
+    <div class="row">
+        {% for plan in plans %}
+        <div class="col-lg-3 col-md-6 mb-4">
+            <div class="card shadow h-100 {% if plan.is_featured %}border-primary{% endif %}">
+                {% if plan.is_featured %}
+                <div class="card-header bg-primary text-white text-center">
+                    <i class="fas fa-star"></i> Plano em Destaque
+                </div>
+                {% endif %}
+                <div class="card-body text-center">
+                    <h5 class="card-title">{{ plan.display_name }}</h5>
+                    <p class="card-text text-muted">{{ plan.description }}</p>
+                    
+                    <div class="pricing mb-3">
+                        <h3 class="text-primary">R$ {{ "%.2f"|format(plan.monthly_price) }}</h3>
+                        <small class="text-muted">por mês</small>
+                        {% if plan.yearly_price %}
+                        <br>
+                        <small class="text-success">R$ {{ "%.2f"|format(plan.yearly_price) }}/ano</small>
+                        {% endif %}
+                    </div>
+                    
+                    <div class="features mb-3">
+                        <ul class="list-unstyled">
+                            <li class="mb-2">
+                                <i class="fas fa-check text-success me-2"></i>
+                                Máximo {{ plan.max_berths }} vaga(s)
+                            </li>
+                            {% if plan.max_services_per_month > 0 %}
+                            <li class="mb-2">
+                                <i class="fas fa-check text-success me-2"></i>
+                                {{ plan.max_services_per_month }} serviços/mês
+                            </li>
+                            {% elif plan.max_services_per_month == -1 %}
+                            <li class="mb-2">
+                                <i class="fas fa-check text-success me-2"></i>
+                                Serviços ilimitados
+                            </li>
+                            {% endif %}
+                            {% if plan.can_create_services %}
+                            <li class="mb-2">
+                                <i class="fas fa-check text-success me-2"></i>
+                                Solicitar serviços
+                            </li>
+                            {% endif %}
+                            {% if plan.can_upload_documents %}
+                            <li class="mb-2">
+                                <i class="fas fa-check text-success me-2"></i>
+                                Upload de documentos
+                            </li>
+                            {% endif %}
+                            {% if plan.is_test_plan %}
+                            <li class="mb-2">
+                                <i class="fas fa-exclamation-triangle text-warning me-2"></i>
+                                Apenas navegação (sem gravações)
+                            </li>
+                            {% endif %}
+                        </ul>
+                    </div>
+                    
+                    <div class="status-badge mb-3">
+                        {% if plan.is_active %}
+                        <span class="badge badge-success">Ativo</span>
+                        {% else %}
+                        <span class="badge badge-secondary">Inativo</span>
+                        {% endif %}
+                        
+                        {% if plan.is_test_plan %}
+                        <span class="badge badge-warning">Plano Teste</span>
+                        {% endif %}
+                    </div>
+                </div>
+                <div class="card-footer text-center">
+                    <a href="{{ url_for('admin.subscription_plan_detail', plan_id=plan.id) }}" 
+                       class="btn btn-primary btn-sm">
+                        <i class="fas fa-eye"></i> Ver Detalhes
+                    </a>
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+
+    {% if not plans %}
+    <div class="text-center py-4">
+        <i class="fas fa-crown fa-3x text-muted mb-3"></i>
+        <p class="text-muted">Nenhum plano de assinatura encontrado.</p>
+        <p class="text-muted">Verifique se os planos foram criados no banco de dados.</p>
+    </div>
+    {% endif %}
+</div>
+{% endblock %} 

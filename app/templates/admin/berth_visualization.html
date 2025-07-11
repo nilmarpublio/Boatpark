@@ -1,0 +1,336 @@
+{% extends "base.html" %}
+
+{% block title %}Visualização de Vagas - {{ marina.name }}{% endblock %}
+
+{% block content %}
+<!-- DEBUG: Template carregado com sucesso -->
+<div class="container-fluid">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1 class="h3">
+            <i class="fas fa-ship"></i> Vagas da Marina: {{ marina.name }}
+        </h1>
+        <div>
+            <a href="{{ url_for('admin.marinas') }}" class="btn btn-secondary">
+                <i class="fas fa-arrow-left"></i> Voltar às Marinas
+            </a>
+            <a href="{{ url_for('admin.berth_new') }}" class="btn btn-primary">
+                <i class="fas fa-plus"></i> Adicionar Vaga
+            </a>
+        </div>
+    </div>
+
+    <!-- Resumo das Vagas -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card shadow">
+                <div class="card-header bg-primary text-white">
+                    <h5 class="mb-0">
+                        <i class="fas fa-chart-pie"></i> Resumo das Vagas
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-2 text-center">
+                            <div class="border rounded p-3">
+                                <h4 class="text-primary">{{ summary.total_configured }}</h4>
+                                <small class="text-muted">Total Configurado</small>
+                            </div>
+                        </div>
+                        <div class="col-md-2 text-center">
+                            <div class="border rounded p-3">
+                                <h4 class="text-info">{{ summary.total_created }}</h4>
+                                <small class="text-muted">Criadas no Sistema</small>
+                            </div>
+                        </div>
+                        <div class="col-md-2 text-center">
+                            <div class="border rounded p-3 bg-success text-white">
+                                <h4>{{ summary.available }}</h4>
+                                <small>Disponíveis</small>
+                            </div>
+                        </div>
+                        <div class="col-md-2 text-center">
+                            <div class="border rounded p-3 bg-danger text-white">
+                                <h4>{{ summary.occupied }}</h4>
+                                <small>Ocupadas</small>
+                            </div>
+                        </div>
+                        <div class="col-md-2 text-center">
+                            <div class="border rounded p-3 bg-warning text-dark">
+                                <h4>{{ summary.maintenance }}</h4>
+                                <small>Manutenção</small>
+                            </div>
+                        </div>
+                        <div class="col-md-2 text-center">
+                            <div class="border rounded p-3 bg-info text-white">
+                                <h4>{{ summary.reserved }}</h4>
+                                <small>Reservadas</small>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Configuração de Vagas -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card shadow">
+                <div class="card-header bg-warning text-dark">
+                    <h5 class="mb-0">
+                        <i class="fas fa-cog"></i> Configuração de Vagas
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <form method="POST" action="{{ url_for('admin.update_marina_berths', marina_id=marina.id) }}">
+                        <div class="row">
+                            <div class="col-md-6">
+                                <label for="total_berths" class="form-label">Número Total de Vagas da Marina</label>
+                                <input type="number" class="form-control" id="total_berths" name="total_berths"
+                                    value="{{ marina.total_berths }}" min="0" max="1000" required>
+                                <div class="form-text">
+                                    Configure o número total de vagas que a marina possui.
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label">Ações</label>
+                                <div class="d-grid gap-2">
+                                    <button type="submit" class="btn btn-primary">
+                                        <i class="fas fa-save"></i> Salvar Configuração
+                                    </button>
+                                    <button type="button" class="btn btn-success" onclick="generateBerths()">
+                                        <i class="fas fa-magic"></i> Gerar Vagas Automaticamente
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Visualização das Vagas -->
+    <div class="row">
+        <div class="col-12">
+            <div class="card shadow">
+                <div class="card-header bg-info text-white">
+                    <h5 class="mb-0">
+                        <i class="fas fa-th"></i> Visualização das Vagas
+                    </h5>
+                </div>
+                <div class="card-body">
+                    {% if berths %}
+                    <div class="berth-grid">
+                        {% for berth in berths %}
+                        <div class="berth-item" data-bs-toggle="tooltip" data-bs-placement="top"
+                            title="{{ berth.get_status_display() }} - {{ berth.berth_type }} ({{ berth.length }}m)">
+                            <button class="btn berth-button berth-{{ berth.status }}"
+                                onclick="showBerthDetails({{ berth.id }})">
+                                {{ berth.berth_number }}
+                            </button>
+                        </div>
+                        {% endfor %}
+                    </div>
+                    {% else %}
+                    <div class="text-center py-5">
+                        <i class="fas fa-ship fa-3x text-muted mb-3"></i>
+                        <h5>Nenhuma vaga criada</h5>
+                        <p class="text-muted">Configure o número de vagas e gere automaticamente ou adicione
+                            manualmente.</p>
+                        <a href="{{ url_for('admin.berth_new') }}" class="btn btn-primary">
+                            <i class="fas fa-plus"></i> Adicionar Primeira Vaga
+                        </a>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal de Detalhes da Vaga -->
+<div class="modal fade" id="berthModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Detalhes da Vaga</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body" id="berthModalBody">
+                <!-- Conteúdo será carregado via AJAX -->
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Fechar</button>
+                <a href="#" class="btn btn-primary" id="editBerthBtn">
+                    <i class="fas fa-edit"></i> Editar
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    .berth-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(80px, 1fr));
+        gap: 10px;
+        padding: 20px;
+    }
+
+    .berth-item {
+        text-align: center;
+    }
+
+    .berth-button {
+        width: 60px;
+        height: 60px;
+        border-radius: 50%;
+        font-weight: bold;
+        font-size: 14px;
+        border: 2px solid #dee2e6;
+        transition: all 0.3s ease;
+    }
+
+    .berth-button:hover {
+        transform: scale(1.1);
+        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+    }
+
+    .berth-available {
+        background-color: #28a745;
+        color: white;
+    }
+
+    .berth-occupied {
+        background-color: #dc3545;
+        color: white;
+    }
+
+    .berth-maintenance {
+        background-color: #ffc107;
+        color: #212529;
+    }
+
+    .berth-reserved {
+        background-color: #17a2b8;
+        color: white;
+    }
+
+    .berth-inactive {
+        background-color: #6c757d;
+        color: white;
+    }
+</style>
+
+<script>
+    // Inicializar tooltips
+    var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'))
+    var tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
+        return new bootstrap.Tooltip(tooltipTriggerEl)
+    });
+
+    function showBerthDetails(berthId) {
+        // Carregar detalhes da vaga via AJAX
+        fetch(`/admin/api/berths/${berthId}`)
+            .then(response => response.json())
+            .then(data => {
+                const modalBody = document.getElementById('berthModalBody');
+                const editBtn = document.getElementById('editBerthBtn');
+
+                modalBody.innerHTML = `
+                <div class="row">
+                    <div class="col-6">
+                        <strong>Número:</strong><br>
+                        <span class="badge bg-primary fs-6">${data.berth_number}</span>
+                    </div>
+                    <div class="col-6">
+                        <strong>Status:</strong><br>
+                        <span class="badge bg-${getStatusColor(data.status)}">${data.status_display}</span>
+                    </div>
+                </div>
+                <hr>
+                <div class="row">
+                    <div class="col-6">
+                        <strong>Tipo:</strong><br>
+                        ${data.berth_type}
+                    </div>
+                    <div class="col-6">
+                        <strong>Dimensões:</strong><br>
+                        ${data.length}m x ${data.width}m
+                    </div>
+                </div>
+                <hr>
+                <div class="row">
+                    <div class="col-12">
+                        <strong>Descrição:</strong><br>
+                        ${data.description || 'Nenhuma descrição'}
+                    </div>
+                </div>
+                <hr>
+                <div class="row">
+                    <div class="col-6">
+                        <strong>Preço Mensal:</strong><br>
+                        R$ ${data.monthly_rate || '0.00'}
+                    </div>
+                    <div class="col-6">
+                        <strong>Preço Anual:</strong><br>
+                        R$ ${data.yearly_rate || '0.00'}
+                    </div>
+                </div>
+            `;
+
+                editBtn.href = `/admin/berths/${berthId}/edit`;
+
+                const modal = new bootstrap.Modal(document.getElementById('berthModal'));
+                modal.show();
+            })
+            .catch(error => {
+                console.error('Erro ao carregar detalhes da vaga:', error);
+                alert('Erro ao carregar detalhes da vaga');
+            });
+    }
+
+    function getStatusColor(status) {
+        const colors = {
+            'available': 'success',
+            'occupied': 'danger',
+            'maintenance': 'warning',
+            'reserved': 'info',
+            'inactive': 'secondary'
+        };
+        return colors[status] || 'secondary';
+    }
+
+    function generateBerths() {
+        const totalBerths = document.getElementById('total_berths').value;
+        if (!totalBerths || totalBerths <= 0) {
+            alert('Configure o número total de vagas primeiro!');
+            return;
+        }
+
+        if (confirm(`Deseja gerar ${totalBerths} vagas automaticamente?`)) {
+            fetch(`/admin/api/marinas/{{ marina.id }}/generate-berths`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ total_berths: parseInt(totalBerths) })
+            })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        alert('Vagas geradas com sucesso!');
+                        location.reload();
+                    } else {
+                        alert('Erro ao gerar vagas: ' + data.error);
+                    }
+                })
+                .catch(error => {
+                    console.error('Erro:', error);
+                    alert('Erro ao gerar vagas');
+                });
+        }
+    }
+</script>
+{% endblock %}

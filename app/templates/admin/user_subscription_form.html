@@ -1,0 +1,158 @@
+{% extends "base.html" %}
+
+{% block title %}Nova Assinatura - {{ user.full_name }}{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h1 class="h3">
+                    <i class="fas fa-plus-circle"></i> Nova Assinatura
+                </h1>
+                <a href="{{ url_for('admin.user_detail', user_id=user.id) }}" class="btn btn-secondary">
+                    <i class="fas fa-arrow-left"></i> Voltar ao Usuário
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-md-4">
+            <div class="card shadow mb-4">
+                <div class="card-header py-3">
+                    <h6 class="m-0 font-weight-bold text-primary">Informações do Usuário</h6>
+                </div>
+                <div class="card-body">
+                    <p><strong>Nome:</strong> {{ user.full_name }}</p>
+                    <p><strong>Email:</strong> {{ user.email }}</p>
+                    <p><strong>Telefone:</strong> {{ user.phone or 'Não informado' }}</p>
+                    <p><strong>CPF:</strong> {{ user.cpf or 'Não informado' }}</p>
+                    <p><strong>Status:</strong> 
+                        {% if user.is_active %}
+                        <span class="badge badge-success">Ativo</span>
+                        {% else %}
+                        <span class="badge badge-warning">Inativo</span>
+                        {% endif %}
+                    </p>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-8">
+            <div class="card shadow">
+                <div class="card-header py-3">
+                    <h6 class="m-0 font-weight-bold text-primary">Criar Nova Assinatura</h6>
+                </div>
+                <div class="card-body">
+                    <form method="POST">
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label for="plan_id" class="form-label">Plano *</label>
+                                <select class="form-select" id="plan_id" name="plan_id" required>
+                                    <option value="">Selecione um plano</option>
+                                    {% for plan in plans %}
+                                    <option value="{{ plan.id }}">
+                                        {{ plan.display_name }} - R$ {{ "%.2f"|format(plan.monthly_price) }}/mês
+                                    </option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label for="marina_id" class="form-label">Marina *</label>
+                                <select class="form-select" id="marina_id" name="marina_id" required>
+                                    <option value="">Selecione uma marina</option>
+                                    {% for marina in marinas %}
+                                    <option value="{{ marina.id }}">{{ marina.name }}</option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label for="berth_id" class="form-label">Vaga *</label>
+                                <select class="form-select" id="berth_id" name="berth_id" required>
+                                    <option value="">Selecione primeiro uma marina</option>
+                                </select>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label">Informações da Vaga</label>
+                                <div id="berth-info" class="form-control-plaintext">
+                                    Selecione uma vaga para ver as informações
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="alert alert-info">
+                            <i class="fas fa-info-circle"></i>
+                            <strong>Informações:</strong>
+                            <ul class="mb-0 mt-2">
+                                <li>A assinatura será criada com status "Ativo"</li>
+                                <li>O primeiro pagamento será cobrado automaticamente</li>
+                                <li>A vaga será marcada como "Ocupada"</li>
+                                <li>A renovação será automática mensalmente</li>
+                            </ul>
+                        </div>
+
+                        <div class="d-flex justify-content-end">
+                            <a href="{{ url_for('admin.user_detail', user_id=user.id) }}" class="btn btn-secondary me-2">
+                                Cancelar
+                            </a>
+                            <button type="submit" class="btn btn-success">
+                                <i class="fas fa-plus"></i> Criar Assinatura
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+// Carregar vagas quando uma marina for selecionada
+document.getElementById('marina_id').addEventListener('change', function() {
+    const marinaId = this.value;
+    const berthSelect = document.getElementById('berth_id');
+    const berthInfo = document.getElementById('berth-info');
+    
+    if (marinaId) {
+        // Fazer requisição AJAX para buscar vagas da marina
+        fetch(`/admin/api/marinas/${marinaId}/berths`)
+            .then(response => response.json())
+            .then(data => {
+                berthSelect.innerHTML = '<option value="">Selecione uma vaga</option>';
+                berthInfo.textContent = 'Selecione uma vaga para ver as informações';
+                
+                data.berths.forEach(berth => {
+                    const option = document.createElement('option');
+                    option.value = berth.id;
+                    option.textContent = `${berth.number} - ${berth.type} (${berth.status})`;
+                    berthSelect.appendChild(option);
+                });
+            })
+            .catch(error => {
+                console.error('Erro ao carregar vagas:', error);
+                berthSelect.innerHTML = '<option value="">Erro ao carregar vagas</option>';
+            });
+    } else {
+        berthSelect.innerHTML = '<option value="">Selecione primeiro uma marina</option>';
+        berthInfo.textContent = 'Selecione uma vaga para ver as informações';
+    }
+});
+
+// Mostrar informações da vaga quando selecionada
+document.getElementById('berth_id').addEventListener('change', function() {
+    const berthId = this.value;
+    const berthInfo = document.getElementById('berth-info');
+    
+    if (berthId) {
+        const selectedOption = this.options[this.selectedIndex];
+        berthInfo.textContent = selectedOption.textContent;
+    } else {
+        berthInfo.textContent = 'Selecione uma vaga para ver as informações';
+    }
+});
+</script>
+{% endblock %} 

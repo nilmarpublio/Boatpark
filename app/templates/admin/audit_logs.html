@@ -1,0 +1,190 @@
+{% extends "base.html" %}
+
+{% block title %}Logs de Auditoria{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h1 class="h3">
+                    <i class="fas fa-history"></i> Logs de Auditoria
+                </h1>
+                <a href="{{ url_for('admin.index') }}" class="btn btn-secondary">
+                    <i class="fas fa-arrow-left"></i> Voltar ao Dashboard
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <!-- Filtros -->
+    <div class="card shadow mb-4">
+        <div class="card-header py-3">
+            <h6 class="m-0 font-weight-bold text-primary">Filtros</h6>
+        </div>
+        <div class="card-body">
+            <form method="GET" class="row g-3">
+                <div class="col-md-3">
+                    <label for="action" class="form-label">Ação</label>
+                    <input type="text" class="form-control" id="action" name="action" 
+                           value="{{ action_filter }}" placeholder="Ex: CREATE, UPDATE, DELETE">
+                </div>
+                <div class="col-md-3">
+                    <label for="table" class="form-label">Tabela</label>
+                    <input type="text" class="form-control" id="table" name="table" 
+                           value="{{ table_filter }}" placeholder="Ex: users, subscriptions">
+                </div>
+                <div class="col-md-3">
+                    <label for="user" class="form-label">Usuário</label>
+                    <input type="text" class="form-control" id="user" name="user" 
+                           value="{{ user_filter }}" placeholder="Nome do usuário">
+                </div>
+                <div class="col-md-3 d-flex align-items-end">
+                    <div class="btn-group w-100" role="group">
+                        <button type="submit" class="btn btn-primary">
+                            <i class="fas fa-search"></i> Filtrar
+                        </button>
+                        <a href="{{ url_for('admin.audit_logs') }}" class="btn btn-outline-secondary">
+                            <i class="fas fa-times"></i> Limpar
+                        </a>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Lista de Logs -->
+    <div class="card shadow">
+        <div class="card-header py-3">
+            <h6 class="m-0 font-weight-bold text-primary">
+                Logs de Auditoria 
+                <span class="badge badge-info">{{ logs.total }} registros</span>
+            </h6>
+        </div>
+        <div class="card-body">
+            {% if logs.items %}
+            <div class="table-responsive">
+                <table class="table table-bordered" width="100%" cellspacing="0">
+                    <thead>
+                        <tr>
+                            <th>Data/Hora</th>
+                            <th>Usuário</th>
+                            <th>Ação</th>
+                            <th>Tabela</th>
+                            <th>Registro ID</th>
+                            <th>Descrição</th>
+                            <th>IP</th>
+                            <th>Ações</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for log in logs.items %}
+                        <tr>
+                            <td>{{ log.created_at.strftime('%d/%m/%Y %H:%M:%S') }}</td>
+                            <td>
+                                {% if log.user %}
+                                <a href="{{ url_for('admin.user_detail', user_id=log.user.id) }}">
+                                    {{ log.user.full_name }}
+                                </a>
+                                {% else %}
+                                <span class="text-muted">Sistema</span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                {% if log.action == 'CREATE' %}
+                                <span class="badge badge-success">{{ log.action }}</span>
+                                {% elif log.action == 'UPDATE' %}
+                                <span class="badge badge-warning">{{ log.action }}</span>
+                                {% elif log.action == 'DELETE' %}
+                                <span class="badge badge-danger">{{ log.action }}</span>
+                                {% elif log.action == 'LOGIN' %}
+                                <span class="badge badge-info">{{ log.action }}</span>
+                                {% elif log.action == 'LOGOUT' %}
+                                <span class="badge badge-secondary">{{ log.action }}</span>
+                                {% else %}
+                                <span class="badge badge-primary">{{ log.action }}</span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                <span class="badge badge-light">{{ log.table_name }}</span>
+                            </td>
+                            <td>
+                                {% if log.record_id %}
+                                <span class="badge badge-dark">{{ log.record_id }}</span>
+                                {% else %}
+                                <span class="text-muted">-</span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                <span title="{{ log.description }}">
+                                    {{ log.description[:50] }}{% if log.description|length > 50 %}...{% endif %}
+                                </span>
+                            </td>
+                            <td>
+                                <small class="text-muted">{{ log.ip_address or '-' }}</small>
+                            </td>
+                            <td>
+                                <a href="{{ url_for('admin.audit_log_detail', log_id=log.id) }}" 
+                                   class="btn btn-sm btn-info" title="Ver detalhes">
+                                    <i class="fas fa-eye"></i>
+                                </a>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- Paginação -->
+            {% if logs.pages > 1 %}
+            <nav aria-label="Paginação dos logs">
+                <ul class="pagination justify-content-center">
+                    {% if logs.has_prev %}
+                    <li class="page-item">
+                        <a class="page-link" href="{{ url_for('admin.audit_logs', page=logs.prev_num, action=action_filter, table=table_filter, user=user_filter) }}">
+                            <i class="fas fa-chevron-left"></i> Anterior
+                        </a>
+                    </li>
+                    {% endif %}
+                    
+                    {% for page_num in logs.iter_pages() %}
+                        {% if page_num %}
+                            {% if page_num != logs.page %}
+                            <li class="page-item">
+                                <a class="page-link" href="{{ url_for('admin.audit_logs', page=page_num, action=action_filter, table=table_filter, user=user_filter) }}">
+                                    {{ page_num }}
+                                </a>
+                            </li>
+                            {% else %}
+                            <li class="page-item active">
+                                <span class="page-link">{{ page_num }}</span>
+                            </li>
+                            {% endif %}
+                        {% else %}
+                        <li class="page-item disabled">
+                            <span class="page-link">...</span>
+                        </li>
+                        {% endif %}
+                    {% endfor %}
+                    
+                    {% if logs.has_next %}
+                    <li class="page-item">
+                        <a class="page-link" href="{{ url_for('admin.audit_logs', page=logs.next_num, action=action_filter, table=table_filter, user=user_filter) }}">
+                            Próxima <i class="fas fa-chevron-right"></i>
+                        </a>
+                    </li>
+                    {% endif %}
+                </ul>
+            </nav>
+            {% endif %}
+            
+            {% else %}
+            <div class="text-center py-4">
+                <i class="fas fa-history fa-3x text-muted mb-3"></i>
+                <p class="text-muted">Nenhum log de auditoria encontrado.</p>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %} 

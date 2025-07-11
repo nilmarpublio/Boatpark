@@ -1,0 +1,149 @@
+{% extends "base.html" %}
+
+{% block title %}{{ plan.display_name }}{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h1 class="h3">
+                    <i class="fas fa-crown"></i> {{ plan.display_name }}
+                </h1>
+                <div>
+                    <a href="{{ url_for('admin.subscription_plan_edit', plan_id=plan.id) }}" class="btn btn-primary">
+                        <i class="fas fa-edit"></i> Editar Plano
+                    </a>
+                    <a href="{{ url_for('admin.subscription_plans') }}" class="btn btn-secondary">
+                        <i class="fas fa-arrow-left"></i> Voltar aos Planos
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-lg-8">
+            <div class="card shadow mb-4">
+                <div class="card-header py-3">
+                    <h6 class="m-0 font-weight-bold text-primary">Informações do Plano</h6>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <p><strong>Nome:</strong> {{ plan.name }}</p>
+                            <p><strong>Descrição:</strong> {{ plan.description or 'Nenhuma descrição' }}</p>
+                            <p><strong>Preço Mensal:</strong> R$ {{ "%.2f"|format(plan.monthly_price) }}</p>
+                            {% if plan.yearly_price %}
+                            <p><strong>Preço Anual:</strong> R$ {{ "%.2f"|format(plan.yearly_price) }}</p>
+                            <p><strong>Desconto Anual:</strong> {{ "%.0f"|format((1 - plan.yearly_price / (plan.monthly_price * 12)) * 100) }}%</p>
+                            {% endif %}
+                        </div>
+                        <div class="col-md-6">
+                            <p><strong>Status:</strong> 
+                                {% if plan.is_active %}
+                                <span class="badge badge-success">Ativo</span>
+                                {% else %}
+                                <span class="badge badge-secondary">Inativo</span>
+                                {% endif %}
+                            </p>
+                            {% if plan.is_featured %}
+                            <p><strong>Destaque:</strong> <span class="badge badge-warning">Em Destaque</span></p>
+                            {% endif %}
+                            {% if plan.is_test_plan %}
+                            <p><strong>Tipo:</strong> <span class="badge badge-info">Plano de Teste</span></p>
+                            {% endif %}
+                            <p><strong>Criado em:</strong> {{ plan.created_at.strftime('%d/%m/%Y %H:%M') }}</p>
+                            <p><strong>Atualizado em:</strong> {{ plan.updated_at.strftime('%d/%m/%Y %H:%M') }}</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card shadow mb-4">
+                <div class="card-header py-3">
+                    <h6 class="m-0 font-weight-bold text-primary">Características do Plano</h6>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-4">
+                            <h6>Limites</h6>
+                            <ul class="list-unstyled">
+                                <li><i class="fas fa-anchor me-2"></i>Vagas: {{ plan.max_berths }}</li>
+                                <li><i class="fas fa-tools me-2"></i>Serviços/mês: 
+                                    {% if plan.max_services_per_month == -1 %}Ilimitado{% else %}{{ plan.max_services_per_month }}{% endif %}
+                                </li>
+                                <li><i class="fas fa-file-alt me-2"></i>Documentos: 
+                                    {% if plan.max_documents == -1 %}Ilimitado{% else %}{{ plan.max_documents }}{% endif %}
+                                </li>
+                            </ul>
+                        </div>
+                        <div class="col-md-4">
+                            <h6>Permissões</h6>
+                            <ul class="list-unstyled">
+                                <li><i class="fas fa-{% if plan.can_create_services %}check text-success{% else %}times text-danger{% endif %} me-2"></i>Solicitar Serviços</li>
+                                <li><i class="fas fa-{% if plan.can_upload_documents %}check text-success{% else %}times text-danger{% endif %} me-2"></i>Upload de Documentos</li>
+                                <li><i class="fas fa-{% if plan.can_make_payments %}check text-success{% else %}times text-danger{% endif %} me-2"></i>Fazer Pagamentos</li>
+                            </ul>
+                        </div>
+                        <div class="col-md-4">
+                            <h6>Recursos Avançados</h6>
+                            <ul class="list-unstyled">
+                                <li><i class="fas fa-{% if plan.can_view_reports %}check text-success{% else %}times text-danger{% endif %} me-2"></i>Ver Relatórios</li>
+                                <li><i class="fas fa-{% if plan.can_access_api %}check text-success{% else %}times text-danger{% endif %} me-2"></i>Acesso à API</li>
+                                <li><i class="fas fa-{% if plan.is_test_plan %}check text-warning{% else %}times text-danger{% endif %} me-2"></i>Plano de Teste</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-lg-4">
+            <div class="card shadow mb-4">
+                <div class="card-header py-3">
+                    <h6 class="m-0 font-weight-bold text-primary">Estatísticas</h6>
+                </div>
+                <div class="card-body">
+                    <div class="text-center mb-3">
+                        <h4 class="text-primary">{{ subscriptions|length }}</h4>
+                        <p class="text-muted">Assinaturas Ativas</p>
+                    </div>
+                    
+                    {% if subscriptions %}
+                    <h6>Assinaturas Recentes</h6>
+                    <div class="table-responsive">
+                        <table class="table table-sm">
+                            <thead>
+                                <tr>
+                                    <th>Usuário</th>
+                                    <th>Status</th>
+                                    <th>Início</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for subscription in subscriptions[:5] %}
+                                <tr>
+                                    <td>{{ subscription.user.full_name }}</td>
+                                    <td>
+                                        {% if subscription.is_active %}
+                                        <span class="badge badge-success">Ativa</span>
+                                        {% else %}
+                                        <span class="badge badge-secondary">Inativa</span>
+                                        {% endif %}
+                                    </td>
+                                    <td>{{ subscription.start_date.strftime('%d/%m/%Y') }}</td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                    {% else %}
+                    <p class="text-muted text-center">Nenhuma assinatura ativa.</p>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %} 

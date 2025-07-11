@@ -1,0 +1,203 @@
+{% extends "base.html" %}
+
+{% block title %}Editar Plano de Assinatura{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h1 class="h3">
+                    <i class="fas fa-edit"></i> Editar Plano: {{ plan.display_name }}
+                </h1>
+                <a href="{{ url_for('admin.subscription_plans') }}" class="btn btn-secondary">
+                    <i class="fas fa-arrow-left"></i> Voltar aos Planos
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-lg-8">
+            <div class="card shadow mb-4">
+                <div class="card-header py-3">
+                    <h6 class="m-0 font-weight-bold text-primary">Informações do Plano</h6>
+                </div>
+                <div class="card-body">
+                    <form method="POST">
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label for="name" class="form-label">Nome do Plano</label>
+                                <input type="text" class="form-control" id="name" value="{{ plan.name }}" readonly>
+                                <div class="form-text">O nome do plano não pode ser alterado.</div>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label for="display_name" class="form-label">Nome para Exibição *</label>
+                                <input type="text" class="form-control" id="display_name" name="display_name" 
+                                       value="{{ plan.display_name }}" required>
+                            </div>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="description" class="form-label">Descrição</label>
+                            <textarea class="form-control" id="description" name="description" rows="3">{{ plan.description }}</textarea>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label for="monthly_price" class="form-label">Preço Mensal (R$) *</label>
+                                <input type="number" class="form-control" id="monthly_price" name="monthly_price" 
+                                       value="{{ plan.monthly_price }}" step="0.01" min="0" required>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label for="yearly_price" class="form-label">Preço Anual (R$)</label>
+                                <input type="number" class="form-control" id="yearly_price" name="yearly_price" 
+                                       value="{{ plan.yearly_price }}" step="0.01" min="0">
+                                <div class="form-text">Deixe em branco se não houver desconto anual.</div>
+                            </div>
+                        </div>
+
+                        <h5 class="mt-4 mb-3">Limites do Plano</h5>
+                        <div class="row">
+                            <div class="col-md-4 mb-3">
+                                <label for="max_berths" class="form-label">Máximo de Vagas</label>
+                                <input type="number" class="form-control" id="max_berths" name="max_berths" 
+                                       value="{{ plan.max_berths }}" min="0" required>
+                            </div>
+                            <div class="col-md-4 mb-3">
+                                <label for="max_services_per_month" class="form-label">Serviços por Mês</label>
+                                <select class="form-control" id="max_services_per_month" name="max_services_per_month">
+                                    <option value="0" {% if plan.max_services_per_month == 0 %}selected{% endif %}>0 (Nenhum)</option>
+                                    <option value="1" {% if plan.max_services_per_month == 1 %}selected{% endif %}>1</option>
+                                    <option value="2" {% if plan.max_services_per_month == 2 %}selected{% endif %}>2</option>
+                                    <option value="5" {% if plan.max_services_per_month == 5 %}selected{% endif %}>5</option>
+                                    <option value="10" {% if plan.max_services_per_month == 10 %}selected{% endif %}>10</option>
+                                    <option value="-1" {% if plan.max_services_per_month == -1 %}selected{% endif %}>Ilimitado</option>
+                                </select>
+                            </div>
+                            <div class="col-md-4 mb-3">
+                                <label for="max_documents" class="form-label">Documentos</label>
+                                <select class="form-control" id="max_documents" name="max_documents">
+                                    <option value="0" {% if plan.max_documents == 0 %}selected{% endif %}>0 (Nenhum)</option>
+                                    <option value="3" {% if plan.max_documents == 3 %}selected{% endif %}>3</option>
+                                    <option value="5" {% if plan.max_documents == 5 %}selected{% endif %}>5</option>
+                                    <option value="10" {% if plan.max_documents == 10 %}selected{% endif %}>10</option>
+                                    <option value="-1" {% if plan.max_documents == -1 %}selected{% endif %}>Ilimitado</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <h5 class="mt-4 mb-3">Permissões</h5>
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="form-check mb-2">
+                                    <input class="form-check-input" type="checkbox" id="can_create_services" name="can_create_services" 
+                                           {% if plan.can_create_services %}checked{% endif %}>
+                                    <label class="form-check-label" for="can_create_services">
+                                        Solicitar Serviços
+                                    </label>
+                                </div>
+                                <div class="form-check mb-2">
+                                    <input class="form-check-input" type="checkbox" id="can_upload_documents" name="can_upload_documents" 
+                                           {% if plan.can_upload_documents %}checked{% endif %}>
+                                    <label class="form-check-label" for="can_upload_documents">
+                                        Upload de Documentos
+                                    </label>
+                                </div>
+                                <div class="form-check mb-2">
+                                    <input class="form-check-input" type="checkbox" id="can_make_payments" name="can_make_payments" 
+                                           {% if plan.can_make_payments %}checked{% endif %}>
+                                    <label class="form-check-label" for="can_make_payments">
+                                        Fazer Pagamentos
+                                    </label>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="form-check mb-2">
+                                    <input class="form-check-input" type="checkbox" id="can_view_reports" name="can_view_reports" 
+                                           {% if plan.can_view_reports %}checked{% endif %}>
+                                    <label class="form-check-label" for="can_view_reports">
+                                        Ver Relatórios
+                                    </label>
+                                </div>
+                                <div class="form-check mb-2">
+                                    <input class="form-check-input" type="checkbox" id="can_access_api" name="can_access_api" 
+                                           {% if plan.can_access_api %}checked{% endif %}>
+                                    <label class="form-check-label" for="can_access_api">
+                                        Acesso à API
+                                    </label>
+                                </div>
+                                <div class="form-check mb-2">
+                                    <input class="form-check-input" type="checkbox" id="is_test_plan" name="is_test_plan" 
+                                           {% if plan.is_test_plan %}checked{% endif %}>
+                                    <label class="form-check-label" for="is_test_plan">
+                                        Plano de Teste (apenas navegação)
+                                    </label>
+                                </div>
+                            </div>
+                        </div>
+
+                        <h5 class="mt-4 mb-3">Status</h5>
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="form-check mb-2">
+                                    <input class="form-check-input" type="checkbox" id="is_active" name="is_active" 
+                                           {% if plan.is_active %}checked{% endif %}>
+                                    <label class="form-check-label" for="is_active">
+                                        Plano Ativo
+                                    </label>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="form-check mb-2">
+                                    <input class="form-check-input" type="checkbox" id="is_featured" name="is_featured" 
+                                           {% if plan.is_featured %}checked{% endif %}>
+                                    <label class="form-check-label" for="is_featured">
+                                        Plano em Destaque
+                                    </label>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="mt-4">
+                            <button type="submit" class="btn btn-primary">
+                                <i class="fas fa-save"></i> Salvar Alterações
+                            </button>
+                            <a href="{{ url_for('admin.subscription_plan_detail', plan_id=plan.id) }}" class="btn btn-secondary">
+                                <i class="fas fa-times"></i> Cancelar
+                            </a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-lg-4">
+            <div class="card shadow mb-4">
+                <div class="card-header py-3">
+                    <h6 class="m-0 font-weight-bold text-primary">Informações do Plano</h6>
+                </div>
+                <div class="card-body">
+                    <p><strong>Nome:</strong> {{ plan.name }}</p>
+                    <p><strong>Criado em:</strong> {{ plan.created_at.strftime('%d/%m/%Y %H:%M') }}</p>
+                    <p><strong>Última atualização:</strong> {{ plan.updated_at.strftime('%d/%m/%Y %H:%M') }}</p>
+                    
+                    <hr>
+                    
+                    <h6>Assinaturas Ativas</h6>
+                    <p class="text-primary h4">{{ plan.subscriptions|length }}</p>
+                    
+                    <hr>
+                    
+                    <h6>Características Atuais</h6>
+                    <ul class="list-unstyled">
+                        {% for feature in plan.features_list %}
+                        <li><i class="fas fa-check text-success me-2"></i>{{ feature }}</li>
+                        {% endfor %}
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %} 

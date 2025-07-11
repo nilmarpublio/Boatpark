@@ -1,0 +1,184 @@
+{% extends "base.html" %}
+
+{% block title %}Detalhes da Notificação{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h1 class="h3">
+                    <i class="fas fa-bell"></i> Detalhes da Notificação
+                </h1>
+                <div>
+                    <a href="{{ url_for('admin.notifications') }}" class="btn btn-secondary me-2">
+                        <i class="fas fa-arrow-left"></i> Voltar às Notificações
+                    </a>
+                    <button type="button" class="btn btn-danger" onclick="confirmDelete()">
+                        <i class="fas fa-trash"></i> Excluir
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-lg-8">
+            <div class="card shadow">
+                <div class="card-header py-3">
+                    <h6 class="m-0 font-weight-bold text-primary">Informações da Notificação</h6>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label fw-bold">Título:</label>
+                            <p class="form-control-plaintext">{{ notification.title }}</p>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label fw-bold">Tipo:</label>
+                            <p class="form-control-plaintext">
+                                {% if notification.notification_type == 'general' %}
+                                <span class="badge badge-primary">{{ notification.notification_type }}</span>
+                                {% elif notification.notification_type == 'system_message' %}
+                                <span class="badge badge-info">{{ notification.notification_type }}</span>
+                                {% elif notification.notification_type == 'payment_reminder' %}
+                                <span class="badge badge-warning">{{ notification.notification_type }}</span>
+                                {% elif notification.notification_type == 'payment_overdue' %}
+                                <span class="badge badge-danger">{{ notification.notification_type }}</span>
+                                {% else %}
+                                <span class="badge badge-secondary">{{ notification.notification_type }}</span>
+                                {% endif %}
+                            </p>
+                        </div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label fw-bold">Mensagem:</label>
+                        <div class="border rounded p-3 bg-light">
+                            {{ notification.message|nl2br }}
+                        </div>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label fw-bold">Status:</label>
+                            <p class="form-control-plaintext">
+                                {% if notification.is_read %}
+                                <span class="badge badge-success">Lida</span>
+                                {% else %}
+                                <span class="badge badge-warning">Não lida</span>
+                                {% endif %}
+                            </p>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label fw-bold">Data de Criação:</label>
+                            <p class="form-control-plaintext">{{ notification.created_at.strftime('%d/%m/%Y %H:%M:%S') }}</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-lg-4">
+            <div class="card shadow mb-4">
+                <div class="card-header py-3">
+                    <h6 class="m-0 font-weight-bold text-primary">Usuário Destinatário</h6>
+                </div>
+                <div class="card-body">
+                    {% if notification.user %}
+                    <div class="text-center mb-3">
+                        <i class="fas fa-user fa-3x text-primary"></i>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label fw-bold">Nome:</label>
+                        <p class="form-control-plaintext">
+                            <a href="{{ url_for('admin.user_detail', user_id=notification.user.id) }}">
+                                {{ notification.user.full_name }}
+                            </a>
+                        </p>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label fw-bold">Email:</label>
+                        <p class="form-control-plaintext">{{ notification.user.email }}</p>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label fw-bold">Tipo de Usuário:</label>
+                        <p class="form-control-plaintext">
+                            {% if notification.user.is_admin %}
+                            <span class="badge badge-danger">Administrador</span>
+                            {% else %}
+                            <span class="badge badge-primary">Usuário</span>
+                            {% endif %}
+                        </p>
+                    </div>
+                    {% else %}
+                    <div class="text-center">
+                        <i class="fas fa-user-slash fa-3x text-muted"></i>
+                        <p class="text-muted mt-2">Usuário removido</p>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+
+            <div class="card shadow">
+                <div class="card-header py-3">
+                    <h6 class="m-0 font-weight-bold text-primary">Criado por</h6>
+                </div>
+                <div class="card-body">
+                    {% if notification.created_by_user %}
+                    <div class="text-center mb-3">
+                        <i class="fas fa-user-cog fa-3x text-success"></i>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label fw-bold">Nome:</label>
+                        <p class="form-control-plaintext">
+                            <a href="{{ url_for('admin.user_detail', user_id=notification.created_by_user.id) }}">
+                                {{ notification.created_by_user.full_name }}
+                            </a>
+                        </p>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label fw-bold">Email:</label>
+                        <p class="form-control-plaintext">{{ notification.created_by_user.email }}</p>
+                    </div>
+                    {% else %}
+                    <div class="text-center">
+                        <i class="fas fa-cog fa-3x text-muted"></i>
+                        <p class="text-muted mt-2">Sistema</p>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal de confirmação de exclusão -->
+<div class="modal fade" id="deleteModal" tabindex="-1" aria-labelledby="deleteModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="deleteModalLabel">Confirmar Exclusão</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <p>Tem certeza que deseja excluir esta notificação?</p>
+                <p class="text-danger"><small>Esta ação não pode ser desfeita.</small></p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                <form method="POST" action="{{ url_for('admin.notification_delete', notification_id=notification.id) }}" style="display: inline;">
+                    <button type="submit" class="btn btn-danger">Excluir</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+function confirmDelete() {
+    const modal = new bootstrap.Modal(document.getElementById('deleteModal'));
+    modal.show();
+}
+</script>
+{% endblock %} 

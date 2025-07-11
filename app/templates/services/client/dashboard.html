@@ -1,0 +1,116 @@
+{% extends "base.html" %}
+
+{% block title %}Meus Serviços{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <h1 class="h3 mb-4"><i class="fas fa-tools"></i> Meus Serviços</h1>
+    
+    <!-- Serviços Disponíveis -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card shadow mb-4">
+                <div class="card-header py-3">
+                    <h6 class="m-0 font-weight-bold text-primary">Serviços Disponíveis</h6>
+                </div>
+                <div class="card-body">
+                    {% if services %}
+                    <div class="row">
+                        {% for service in services %}
+                        <div class="col-md-4 mb-3">
+                            <div class="card h-100">
+                                <div class="card-body">
+                                    <h5 class="card-title">{{ service.name }}</h5>
+                                    <p class="card-text">{{ service.description[:100] }}{% if service.description|length > 100 %}...{% endif %}</p>
+                                    <p class="card-text">
+                                        <strong>Preço:</strong> R$ {{ '%.2f'|format(service.price) }}<br>
+                                        <strong>Duração:</strong> {{ service.duration_minutes }} minutos<br>
+                                        <strong>Marina:</strong> {{ service.marina.name }}
+                                    </p>
+                                    <a href="{{ url_for('services.request_service', service_id=service.id) }}" class="btn btn-primary">
+                                        <i class="fas fa-plus"></i> Solicitar
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                    {% else %}
+                    <p class="text-muted">Nenhum serviço disponível no momento.</p>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Minhas Solicitações -->
+    <div class="row">
+        <div class="col-12">
+            <div class="card shadow mb-4">
+                <div class="card-header py-3 d-flex flex-row align-items-center justify-content-between">
+                    <h6 class="m-0 font-weight-bold text-primary">Minhas Solicitações</h6>
+                    <a href="{{ url_for('services.my_requests') }}" class="btn btn-sm btn-primary">Ver Todas</a>
+                </div>
+                <div class="card-body">
+                    {% if user_requests %}
+                    <div class="table-responsive">
+                        <table class="table table-bordered">
+                            <thead>
+                                <tr>
+                                    <th>ID</th>
+                                    <th>Serviço</th>
+                                    <th>Embarcação</th>
+                                    <th>Data Preferida</th>
+                                    <th>Status</th>
+                                    <th>Pagamento</th>
+                                    <th>Ações</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for request in user_requests %}
+                                <tr>
+                                    <td>{{ request.id }}</td>
+                                    <td>{{ request.service.name }}</td>
+                                    <td>{{ request.vessel_name }}</td>
+                                    <td>{{ request.preferred_date.strftime('%d/%m/%Y') }} às {{ request.preferred_time.strftime('%H:%M') }}</td>
+                                    <td>
+                                        {% if request.status == 'requested' %}
+                                        <span class="badge badge-warning">{{ request.status_display }}</span>
+                                        {% elif request.status == 'scheduled' %}
+                                        <span class="badge badge-info">{{ request.status_display }}</span>
+                                        {% elif request.status == 'in_progress' %}
+                                        <span class="badge badge-primary">{{ request.status_display }}</span>
+                                        {% elif request.status == 'completed' %}
+                                        <span class="badge badge-success">{{ request.status_display }}</span>
+                                        {% elif request.status == 'cancelled' %}
+                                        <span class="badge badge-danger">{{ request.status_display }}</span>
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        {% if request.payment_status == 'pending' %}
+                                        <span class="badge badge-warning">{{ request.payment_status_display }}</span>
+                                        {% elif request.payment_status == 'paid' %}
+                                        <span class="badge badge-success">{{ request.payment_status_display }}</span>
+                                        {% else %}
+                                        <span class="badge badge-secondary">{{ request.payment_status_display }}</span>
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        <a href="{{ url_for('services.my_request_detail', request_id=request.id) }}" class="btn btn-sm btn-info">
+                                            <i class="fas fa-eye"></i> Ver
+                                        </a>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                    {% else %}
+                    <p class="text-muted">Você ainda não tem solicitações de serviço.</p>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %} 

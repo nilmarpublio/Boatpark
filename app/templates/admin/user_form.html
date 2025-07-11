@@ -1,0 +1,172 @@
+{% extends "base.html" %}
+
+{% block title %}{% if user %}Editar Usuário{% else %}Novo Usuário{% endif %}{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h1 class="h3">
+                    <i class="fas fa-user"></i>
+                    {% if user %}Editar Usuário{% else %}Novo Usuário{% endif %}
+                </h1>
+                <a href="{{ url_for('admin.users') }}" class="btn btn-secondary">
+                    <i class="fas fa-arrow-left"></i> Voltar aos Usuários
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <div class="card shadow">
+        <div class="card-header py-3">
+            <h6 class="m-0 font-weight-bold text-primary">
+                {% if user %}Editar Dados do Usuário{% else %}Criar Novo Usuário{% endif %}
+            </h6>
+        </div>
+        <div class="card-body">
+            <form method="POST">
+                <div class="row">
+                    <div class="col-md-6 mb-3">
+                        <label for="first_name" class="form-label">Nome *</label>
+                        <input type="text" class="form-control" id="first_name" name="first_name"
+                            value="{{ user.first_name if user else '' }}" required>
+                    </div>
+                    <div class="col-md-6 mb-3">
+                        <label for="last_name" class="form-label">Sobrenome *</label>
+                        <input type="text" class="form-control" id="last_name" name="last_name"
+                            value="{{ user.last_name if user else '' }}" required>
+                    </div>
+                </div>
+
+                <div class="row">
+                    <div class="col-md-6 mb-3">
+                        <label for="email" class="form-label">Email *</label>
+                        <input type="email" class="form-control" id="email" name="email"
+                            value="{{ user.email if user else '' }}" required>
+                    </div>
+                    <div class="col-md-6 mb-3">
+                        <label for="phone" class="form-label">Telefone</label>
+                        <input type="text" class="form-control" id="phone" name="phone"
+                            value="{{ user.phone if user else '' }}" placeholder="(11) 99999-9999">
+                    </div>
+                </div>
+
+                <div class="row">
+                    <div class="col-md-6 mb-3">
+                        <label for="cpf" class="form-label">CPF</label>
+                        <input type="text" class="form-control" id="cpf" name="cpf"
+                            value="{{ user.cpf if user else '' }}" placeholder="123.456.789-00">
+                    </div>
+                    <div class="col-md-6 mb-3">
+                        <label for="password" class="form-label">
+                            {% if user %}Nova Senha{% else %}Senha *{% endif %}
+                        </label>
+                        <input type="password" class="form-control" id="password" name="password" {% if not user
+                            %}required{% endif %}>
+                        {% if user %}
+                        <div class="form-text">Deixe em branco para manter a senha atual.</div>
+                        {% endif %}
+                    </div>
+                </div>
+
+                <div class="row">
+                    <div class="col-md-4 mb-3">
+                        <label for="user_type" class="form-label">Tipo de Usuário *</label>
+                        <select class="form-select" id="user_type" name="user_type" required>
+                            <option value="user" {% if user and user.user_type=='user' %}selected{% endif %}>
+                                Usuário
+                            </option>
+                            <option value="admin" {% if user and user.user_type=='admin' %}selected{% endif %}>
+                                Administrador
+                            </option>
+                            <option value="superadmin" {% if user and user.user_type=='superadmin' %}selected{% endif
+                                %}>
+                                Super Administrador
+                            </option>
+                        </select>
+                        <div class="form-text">
+                            <strong>Usuário:</strong> Acesso básico ao sistema<br>
+                            <strong>Administrador:</strong> Acesso administrativo limitado<br>
+                            <strong>Super Administrador:</strong> Acesso total ao sistema
+                        </div>
+                    </div>
+                    <div class="col-md-4 mb-3">
+                        <div class="form-check mt-4">
+                            <input class="form-check-input" type="checkbox" id="is_admin" name="is_admin" {% if user and
+                                user.is_admin %}checked{% endif %}>
+                            <label class="form-check-label" for="is_admin">
+                                Administrador (Legado)
+                            </label>
+                            <div class="form-text">Campo legado - será atualizado automaticamente</div>
+                        </div>
+                    </div>
+                    <div class="col-md-4 mb-3">
+                        <div class="form-check mt-4">
+                            <input class="form-check-input" type="checkbox" id="is_active" name="is_active" {% if not
+                                user or user.is_active %}checked{% endif %}>
+                            <label class="form-check-label" for="is_active">
+                                Usuário Ativo
+                            </label>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="d-flex justify-content-end">
+                    <a href="{{ url_for('admin.users') }}" class="btn btn-secondary me-2">
+                        Cancelar
+                    </a>
+                    <button type="submit" class="btn btn-primary">
+                        <i class="fas fa-save"></i>
+                        {% if user %}Atualizar{% else %}Criar{% endif %}
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<script>
+    // Máscara para CPF
+    document.getElementById('cpf').addEventListener('input', function (e) {
+        let value = e.target.value.replace(/\D/g, '');
+        value = value.replace(/(\d{3})(\d)/, '$1.$2');
+        value = value.replace(/(\d{3})(\d)/, '$1.$2');
+        value = value.replace(/(\d{3})(\d{1,2})$/, '$1-$2');
+        e.target.value = value;
+    });
+
+    // Máscara para telefone
+    document.getElementById('phone').addEventListener('input', function (e) {
+        let value = e.target.value.replace(/\D/g, '');
+        value = value.replace(/^(\d{2})(\d)/g, '($1) $2');
+        value = value.replace(/(\d)(\d{4})$/, '$1-$2');
+        e.target.value = value;
+    });
+
+    // Sincronizar user_type com is_admin
+    document.getElementById('user_type').addEventListener('change', function () {
+        const userType = this.value;
+        const isAdminCheckbox = document.getElementById('is_admin');
+
+        // Se for admin ou superadmin, marcar como admin
+        if (userType === 'admin' || userType === 'superadmin') {
+            isAdminCheckbox.checked = true;
+        } else {
+            isAdminCheckbox.checked = false;
+        }
+    });
+
+    // Sincronizar is_admin com user_type
+    document.getElementById('is_admin').addEventListener('change', function () {
+        const isAdmin = this.checked;
+        const userTypeSelect = document.getElementById('user_type');
+
+        if (isAdmin && userTypeSelect.value === 'user') {
+            userTypeSelect.value = 'admin';
+        } else if (!isAdmin && (userTypeSelect.value === 'admin' || userTypeSelect.value === 'superadmin')) {
+            userTypeSelect.value = 'user';
+        }
+    });
+</script>
+{% endblock %}

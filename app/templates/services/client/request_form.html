@@ -1,0 +1,113 @@
+{% extends "base.html" %}
+
+{% block title %}Solicitar Serviço{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1 class="h3"><i class="fas fa-tools"></i> Solicitar Serviço</h1>
+        <a href="{{ url_for('services.index') }}" class="btn btn-secondary">
+            <i class="fas fa-arrow-left"></i> Voltar
+        </a>
+    </div>
+    
+    <div class="row justify-content-center">
+        <div class="col-lg-8">
+            <!-- Informações do Serviço -->
+            <div class="card shadow mb-4">
+                <div class="card-header py-3">
+                    <h6 class="m-0 font-weight-bold text-primary">Informações do Serviço</h6>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <p><strong>Serviço:</strong> {{ service.name }}</p>
+                            <p><strong>Preço:</strong> R$ {{ '%.2f'|format(service.price) }}</p>
+                            <p><strong>Duração:</strong> {{ service.duration_minutes }} minutos</p>
+                        </div>
+                        <div class="col-md-6">
+                            <p><strong>Marina:</strong> {{ service.marina.name }}</p>
+                            <p><strong>Descrição:</strong> {{ service.description }}</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Formulário de Solicitação -->
+            <div class="card shadow mb-4">
+                <div class="card-header py-3">
+                    <h6 class="m-0 font-weight-bold text-primary">Dados da Solicitação</h6>
+                </div>
+                <div class="card-body">
+                    <form method="POST">
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label for="vessel_name">Nome da Embarcação *</label>
+                                    <input type="text" class="form-control" id="vessel_name" name="vessel_name" required>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label for="vessel_type">Tipo de Embarcação</label>
+                                    <select class="form-control" id="vessel_type" name="vessel_type">
+                                        <option value="">Selecione o tipo</option>
+                                        <option value="Iate">Iate</option>
+                                        <option value="Lancha">Lancha</option>
+                                        <option value="Veleiro">Veleiro</option>
+                                        <option value="Jet Ski">Jet Ski</option>
+                                        <option value="Barco a Motor">Barco a Motor</option>
+                                        <option value="Outro">Outro</option>
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label for="vessel_length">Comprimento (metros)</label>
+                                    <input type="number" step="0.1" class="form-control" id="vessel_length" name="vessel_length">
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label for="preferred_date">Data Preferida *</label>
+                                    <input type="date" class="form-control" id="preferred_date" name="preferred_date" required>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label for="preferred_time">Horário Preferido *</label>
+                                    <input type="time" class="form-control" id="preferred_time" name="preferred_time" required>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="notes">Observações</label>
+                            <textarea class="form-control" id="notes" name="notes" rows="3" 
+                                      placeholder="Informações adicionais sobre o serviço desejado..."></textarea>
+                        </div>
+                        
+                        <div class="form-group">
+                            <button type="submit" class="btn btn-primary">
+                                <i class="fas fa-paper-plane"></i> Enviar Solicitação
+                            </button>
+                            <a href="{{ url_for('services.index') }}" class="btn btn-secondary">Cancelar</a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+// Definir data mínima como hoje
+document.getElementById('preferred_date').min = new Date().toISOString().split('T')[0];
+</script>
+{% endblock %} 

@@ -1,0 +1,215 @@
+{% extends "base.html" %}
+
+{% block title %}{{ service.name }} - Detalhes{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1 class="h3">
+            <i class="fas fa-tools"></i> {{ service.name }}
+        </h1>
+        <div>
+            <a href="{{ url_for('services.index') }}" class="btn btn-primary">
+                <i class="fas fa-arrow-left"></i> Voltar aos Serviços
+            </a>
+            <a href="{{ url_for('dashboard.index') }}" class="btn btn-secondary">
+                <i class="fas fa-home"></i> Dashboard
+            </a>
+        </div>
+    </div>
+
+    <div class="row">
+        <!-- Detalhes do Serviço -->
+        <div class="col-lg-8">
+            <div class="card shadow mb-4">
+                <div class="card-header">
+                    <h6 class="mb-0">
+                        <i class="fas fa-info-circle"></i> Informações do Serviço
+                    </h6>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <h5>{{ service.name }}</h5>
+                            <p class="text-muted">{{ service.description }}</p>
+                            
+                            <div class="mb-3">
+                                <strong>Categoria:</strong>
+                                <span class="badge badge-secondary">{{ service.category }}</span>
+                            </div>
+                            
+                            <div class="mb-3">
+                                <strong>Preço:</strong>
+                                <span class="badge badge-primary badge-lg">{{ service.formatted_price }}</span>
+                            </div>
+                            
+                            <div class="mb-3">
+                                <strong>Tipo de Preço:</strong>
+                                {% if service.price_type == 'fixed' %}
+                                    <span class="badge badge-info">Fixo</span>
+                                {% elif service.price_type == 'hourly' %}
+                                    <span class="badge badge-info">Por Hora</span>
+                                {% elif service.price_type == 'daily' %}
+                                    <span class="badge badge-info">Por Dia</span>
+                                {% elif service.price_type == 'monthly' %}
+                                    <span class="badge badge-info">Por Mês</span>
+                                {% endif %}
+                            </div>
+                        </div>
+                        
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <strong>Duração Máxima:</strong>
+                                {% if service.max_duration_hours %}
+                                    <span class="badge badge-warning">{{ service.max_duration_hours }} horas</span>
+                                {% else %}
+                                    <span class="text-muted">Variável</span>
+                                {% endif %}
+                            </div>
+                            
+                            <div class="mb-3">
+                                <strong>Status:</strong>
+                                {% if service.is_active %}
+                                    <span class="badge badge-success">Ativo</span>
+                                {% else %}
+                                    <span class="badge badge-secondary">Inativo</span>
+                                {% endif %}
+                            </div>
+                            
+                            <div class="mb-3">
+                                <strong>Aprovação:</strong>
+                                {% if service.requires_approval %}
+                                    <span class="badge badge-warning">Requer Aprovação</span>
+                                    <small class="d-block text-muted">Este serviço precisa ser aprovado pelo administrador.</small>
+                                {% else %}
+                                    <span class="badge badge-success">Automático</span>
+                                    <small class="d-block text-muted">Este serviço é executado automaticamente.</small>
+                                {% endif %}
+                            </div>
+                            
+                            <div class="mb-3">
+                                <strong>Marina:</strong>
+                                <span class="badge badge-info">{{ service.marina.name }}</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Informações Adicionais -->
+            <div class="card shadow mb-4">
+                <div class="card-header">
+                    <h6 class="mb-0">
+                        <i class="fas fa-clipboard-list"></i> Informações Adicionais
+                    </h6>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <h6>O que está incluído:</h6>
+                            <ul class="list-unstyled">
+                                <li><i class="fas fa-check text-success"></i> Serviço profissional</li>
+                                <li><i class="fas fa-check text-success"></i> Garantia de qualidade</li>
+                                <li><i class="fas fa-check text-success"></i> Relatório detalhado</li>
+                                {% if service.requires_approval %}
+                                <li><i class="fas fa-check text-success"></i> Aprovação prévia</li>
+                                {% endif %}
+                            </ul>
+                        </div>
+                        <div class="col-md-6">
+                            <h6>Observações:</h6>
+                            <ul class="list-unstyled">
+                                <li><i class="fas fa-info-circle text-info"></i> Agendamento necessário</li>
+                                <li><i class="fas fa-info-circle text-info"></i> Horário comercial</li>
+                                <li><i class="fas fa-info-circle text-info"></i> Sujeito à disponibilidade</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Painel Lateral -->
+        <div class="col-lg-4">
+            <!-- Status da Seleção -->
+            <div class="card shadow mb-4">
+                <div class="card-header">
+                    <h6 class="mb-0">
+                        <i class="fas fa-check-circle"></i> Status da Seleção
+                    </h6>
+                </div>
+                <div class="card-body text-center">
+                    {% if is_selected %}
+                        <div class="alert alert-success">
+                            <i class="fas fa-check-circle fa-2x mb-2"></i>
+                            <h6>Serviço Selecionado</h6>
+                            <p class="mb-0">Este serviço está em sua lista de seleções.</p>
+                        </div>
+                        <a href="{{ url_for('services.my_selections') }}" class="btn btn-success btn-block">
+                            <i class="fas fa-list"></i> Ver Minhas Seleções
+                        </a>
+                    {% else %}
+                        <div class="alert alert-info">
+                            <i class="fas fa-plus-circle fa-2x mb-2"></i>
+                            <h6>Serviço Disponível</h6>
+                            <p class="mb-0">Este serviço pode ser adicionado à sua seleção.</p>
+                        </div>
+                        <a href="{{ url_for('services.index') }}" class="btn btn-primary btn-block">
+                            <i class="fas fa-plus"></i> Adicionar à Seleção
+                        </a>
+                    {% endif %}
+                </div>
+            </div>
+
+            <!-- Informações da Assinatura -->
+            <div class="card shadow mb-4">
+                <div class="card-header">
+                    <h6 class="mb-0">
+                        <i class="fas fa-user"></i> Sua Assinatura
+                    </h6>
+                </div>
+                <div class="card-body">
+                    <div class="mb-2">
+                        <strong>Marina:</strong><br>
+                        {{ subscription.marina.name }}
+                    </div>
+                    <div class="mb-2">
+                        <strong>Plano:</strong><br>
+                        {{ subscription.plan_name }}
+                    </div>
+                    <div class="mb-2">
+                        <strong>Status:</strong><br>
+                        <span class="badge badge-success">Ativa</span>
+                    </div>
+                    <div class="mb-2">
+                        <strong>Vaga:</strong><br>
+                        {{ subscription.berth.berth_number if subscription.berth else 'Não atribuída' }}
+                    </div>
+                </div>
+            </div>
+
+            <!-- Ações Rápidas -->
+            <div class="card shadow">
+                <div class="card-header">
+                    <h6 class="mb-0">
+                        <i class="fas fa-bolt"></i> Ações Rápidas
+                    </h6>
+                </div>
+                <div class="card-body">
+                    <div class="d-grid gap-2">
+                        <a href="{{ url_for('services.index') }}" class="btn btn-outline-primary">
+                            <i class="fas fa-tools"></i> Ver Todos os Serviços
+                        </a>
+                        <a href="{{ url_for('services.my_selections') }}" class="btn btn-outline-info">
+                            <i class="fas fa-list"></i> Minhas Seleções
+                        </a>
+                        <a href="{{ url_for('dashboard.index') }}" class="btn btn-outline-secondary">
+                            <i class="fas fa-home"></i> Dashboard
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %} 

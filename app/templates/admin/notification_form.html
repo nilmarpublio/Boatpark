@@ -1,0 +1,193 @@
+{% extends "base.html" %}
+
+{% block title %}Nova Notificação{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h1 class="h3">
+                    <i class="fas fa-bell"></i> Nova Notificação
+                </h1>
+                <a href="{{ url_for('admin.notifications') }}" class="btn btn-secondary">
+                    <i class="fas fa-arrow-left"></i> Voltar às Notificações
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-lg-8">
+            <div class="card shadow">
+                <div class="card-header py-3">
+                    <h6 class="m-0 font-weight-bold text-primary">Criar Nova Notificação</h6>
+                </div>
+                <div class="card-body">
+                    <form method="POST">
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label for="type" class="form-label">Tipo de Notificação *</label>
+                                <select class="form-select" id="type" name="type" required>
+                                    <option value="general">Geral</option>
+                                    <option value="system_message">Mensagem do Sistema</option>
+                                    <option value="payment_reminder">Lembrete de Pagamento</option>
+                                    <option value="payment_overdue">Pagamento em Atraso</option>
+                                    <option value="maintenance">Manutenção</option>
+                                    <option value="announcement">Anúncio</option>
+                                </select>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label for="title" class="form-label">Título *</label>
+                                <input type="text" class="form-control" id="title" name="title" 
+                                       placeholder="Título da notificação" required>
+                            </div>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="message" class="form-label">Mensagem *</label>
+                            <textarea class="form-control" id="message" name="message" rows="5" 
+                                      placeholder="Digite a mensagem da notificação..." required></textarea>
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label">Usuários Destinatários *</label>
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" id="all_users" name="target_users" value="all_users">
+                                <label class="form-check-label" for="all_users">
+                                    <strong>Todos os usuários ativos</strong>
+                                </label>
+                            </div>
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" id="subscribers" name="target_users" value="subscribers">
+                                <label class="form-check-label" for="subscribers">
+                                    <strong>Apenas assinantes ativos</strong>
+                                </label>
+                            </div>
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" id="admins" name="target_users" value="admins">
+                                <label class="form-check-label" for="admins">
+                                    <strong>Apenas administradores</strong>
+                                </label>
+                            </div>
+                            <hr>
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" id="custom_users" name="target_users" value="custom">
+                                <label class="form-check-label" for="custom_users">
+                                    <strong>Usuários específicos</strong>
+                                </label>
+                            </div>
+                        </div>
+
+                        <div id="customUsersSection" class="mb-3" style="display: none;">
+                            <label class="form-label">Selecionar Usuários Específicos</label>
+                            <div class="border rounded p-3" style="max-height: 200px; overflow-y: auto;">
+                                {% for user in users %}
+                                <div class="form-check">
+                                    <input class="form-check-input" type="checkbox" 
+                                           id="user_{{ user.id }}" name="target_users" value="{{ user.id }}">
+                                    <label class="form-check-label" for="user_{{ user.id }}">
+                                        {{ user.full_name }} ({{ user.email }})
+                                        {% if user.is_admin %}
+                                        <span class="badge badge-danger">Admin</span>
+                                        {% endif %}
+                                    </label>
+                                </div>
+                                {% endfor %}
+                            </div>
+                        </div>
+
+                        <div class="alert alert-info">
+                            <i class="fas fa-info-circle"></i>
+                            <strong>Informações:</strong>
+                            <ul class="mb-0 mt-2">
+                                <li>A notificação será enviada para todos os usuários selecionados</li>
+                                <li>Os usuários receberão a notificação em tempo real</li>
+                                <li>Você pode selecionar múltiplas opções de destinatários</li>
+                                <li>A notificação ficará visível até ser lida pelo usuário</li>
+                            </ul>
+                        </div>
+
+                        <div class="d-flex justify-content-end">
+                            <a href="{{ url_for('admin.notifications') }}" class="btn btn-secondary me-2">
+                                Cancelar
+                            </a>
+                            <button type="submit" class="btn btn-success">
+                                <i class="fas fa-paper-plane"></i> Enviar Notificação
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-lg-4">
+            <div class="card shadow">
+                <div class="card-header py-3">
+                    <h6 class="m-0 font-weight-bold text-primary">Tipos de Notificação</h6>
+                </div>
+                <div class="card-body">
+                    <div class="mb-3">
+                        <h6><span class="badge badge-primary">Geral</span></h6>
+                        <p class="text-muted small">Notificações gerais para todos os usuários</p>
+                    </div>
+                    <div class="mb-3">
+                        <h6><span class="badge badge-info">Mensagem do Sistema</span></h6>
+                        <p class="text-muted small">Comunicados importantes do sistema</p>
+                    </div>
+                    <div class="mb-3">
+                        <h6><span class="badge badge-warning">Lembrete de Pagamento</span></h6>
+                        <p class="text-muted small">Lembretes sobre pagamentos pendentes</p>
+                    </div>
+                    <div class="mb-3">
+                        <h6><span class="badge badge-danger">Pagamento em Atraso</span></h6>
+                        <p class="text-muted small">Avisos sobre pagamentos vencidos</p>
+                    </div>
+                    <div class="mb-3">
+                        <h6><span class="badge badge-secondary">Manutenção</span></h6>
+                        <p class="text-muted small">Avisos sobre manutenções programadas</p>
+                    </div>
+                    <div class="mb-3">
+                        <h6><span class="badge badge-success">Anúncio</span></h6>
+                        <p class="text-muted small">Anúncios e novidades da marina</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+// Mostrar/ocultar seção de usuários específicos
+document.getElementById('custom_users').addEventListener('change', function() {
+    const customSection = document.getElementById('customUsersSection');
+    if (this.checked) {
+        customSection.style.display = 'block';
+    } else {
+        customSection.style.display = 'none';
+        // Desmarcar todos os usuários específicos
+        const userCheckboxes = customSection.querySelectorAll('input[type="checkbox"]');
+        userCheckboxes.forEach(checkbox => checkbox.checked = false);
+    }
+});
+
+// Validação do formulário
+document.querySelector('form').addEventListener('submit', function(e) {
+    const targetUsers = document.querySelectorAll('input[name="target_users"]:checked');
+    if (targetUsers.length === 0) {
+        e.preventDefault();
+        alert('Por favor, selecione pelo menos um destinatário.');
+        return false;
+    }
+    
+    const title = document.getElementById('title').value.trim();
+    const message = document.getElementById('message').value.trim();
+    
+    if (!title || !message) {
+        e.preventDefault();
+        alert('Por favor, preencha o título e a mensagem.');
+        return false;
+    }
+});
+</script>
+{% endblock %} 

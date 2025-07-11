@@ -1,0 +1,182 @@
+{% extends "base.html" %}
+
+{% block title %}Gerenciar Usuários{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h1 class="h3">
+                    <i class="fas fa-users"></i> Gerenciar Usuários
+                </h1>
+                <div>
+                    <a href="{{ url_for('admin.user_new') }}" class="btn btn-success me-2">
+                        <i class="fas fa-plus"></i> Novo Usuário
+                    </a>
+                    <a href="{{ url_for('admin.index') }}" class="btn btn-secondary">
+                        <i class="fas fa-arrow-left"></i> Voltar ao Dashboard
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="card shadow mb-4">
+        <div class="card-header py-3">
+            <h6 class="m-0 font-weight-bold text-primary">Lista de Usuários</h6>
+        </div>
+        <div class="card-body">
+            {% if users.items %}
+            <div class="table-responsive">
+                <table class="table table-bordered" width="100%" cellspacing="0">
+                    <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>Nome</th>
+                            <th>Email</th>
+                            <th>Tipo</th>
+                            <th>Plano Ativo</th>
+                            <th>Status</th>
+                            <th>Data de Registro</th>
+                            <th>Ações</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for user in users.items %}
+                        <tr>
+                            <td>{{ user.id }}</td>
+                            <td>{{ user.full_name }}</td>
+                            <td>{{ user.email }}</td>
+                            <td>
+                                {% if user.user_type == 'superadmin' %}
+                                <span class="badge bg-danger">Super Admin</span>
+                                {% elif user.user_type == 'admin' %}
+                                <span class="badge bg-warning">Administrador</span>
+                                {% else %}
+                                <span class="badge bg-primary">Usuário</span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                {% if user.active_subscription %}
+                                {% if user.active_subscription.plan %}
+                                <span class="badge badge-info">{{ user.active_subscription.plan.name }}</span>
+                                {% else %}
+                                <span class="badge badge-secondary">Plano não definido</span>
+                                {% endif %}
+                                {% else %}
+                                <span class="badge badge-warning">Sem assinatura</span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                {% if user.is_active %}
+                                <span class="badge badge-success">Ativo</span>
+                                {% else %}
+                                <span class="badge badge-warning">Inativo</span>
+                                {% endif %}
+                            </td>
+                            <td>{{ user.created_at.strftime('%d/%m/%Y %H:%M') }}</td>
+                            <td>
+                                <div class="btn-group" role="group">
+                                    <a href="{{ url_for('admin.user_detail', user_id=user.id) }}"
+                                        class="btn btn-sm btn-info" title="Ver detalhes">
+                                        <i class="fas fa-eye"></i>
+                                    </a>
+                                    <a href="{{ url_for('admin.user_edit', user_id=user.id) }}"
+                                        class="btn btn-sm btn-warning" title="Editar">
+                                        <i class="fas fa-edit"></i>
+                                    </a>
+                                    {% if user.id != current_user.id %}
+                                    <button type="button" class="btn btn-sm btn-danger"
+                                        onclick="confirmDelete({{ user.id }}, '{{ user.full_name }}')" title="Excluir">
+                                        <i class="fas fa-trash"></i>
+                                    </button>
+                                    {% endif %}
+                                </div>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- Paginação -->
+            {% if users.pages > 1 %}
+            <nav aria-label="Navegação de páginas">
+                <ul class="pagination justify-content-center">
+                    {% if users.has_prev %}
+                    <li class="page-item">
+                        <a class="page-link" href="{{ url_for('admin.users', page=users.prev_num) }}">Anterior</a>
+                    </li>
+                    {% endif %}
+
+                    {% for page_num in users.iter_pages() %}
+                    {% if page_num %}
+                    {% if page_num != users.page %}
+                    <li class="page-item">
+                        <a class="page-link" href="{{ url_for('admin.users', page=page_num) }}">{{ page_num }}</a>
+                    </li>
+                    {% else %}
+                    <li class="page-item active">
+                        <span class="page-link">{{ page_num }}</span>
+                    </li>
+                    {% endif %}
+                    {% else %}
+                    <li class="page-item disabled">
+                        <span class="page-link">...</span>
+                    </li>
+                    {% endif %}
+                    {% endfor %}
+
+                    {% if users.has_next %}
+                    <li class="page-item">
+                        <a class="page-link" href="{{ url_for('admin.users', page=users.next_num) }}">Próximo</a>
+                    </li>
+                    {% endif %}
+                </ul>
+            </nav>
+            {% endif %}
+
+            {% else %}
+            <div class="text-center py-4">
+                <i class="fas fa-users fa-3x text-muted mb-3"></i>
+                <p class="text-muted">Nenhum usuário encontrado.</p>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<!-- Modal de confirmação de exclusão -->
+<div class="modal fade" id="deleteModal" tabindex="-1" aria-labelledby="deleteModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="deleteModalLabel">Confirmar Exclusão</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <p>Tem certeza que deseja excluir o usuário <strong id="userName"></strong>?</p>
+                <p class="text-danger"><small>Esta ação não pode ser desfeita e excluirá todas as assinaturas,
+                        pagamentos e dados relacionados ao usuário.</small></p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                <form id="deleteForm" method="POST" style="display: inline;">
+                    <button type="submit" class="btn btn-danger">Excluir</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    function confirmDelete(userId, userName) {
+        document.getElementById('userName').textContent = userName;
+        document.getElementById('deleteForm').action = `/admin/users/${userId}/delete`;
+
+        const modal = new bootstrap.Modal(document.getElementById('deleteModal'));
+        modal.show();
+    }
+</script>
+{% endblock %}

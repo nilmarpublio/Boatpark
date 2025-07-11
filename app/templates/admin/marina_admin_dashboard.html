@@ -1,0 +1,319 @@
+{% extends "base.html" %}
+
+{% block title %}Dashboard Administrador da Marina{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <!-- Header -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1 class="h3">
+            <i class="fas fa-anchor"></i> Dashboard Administrador da Marina
+        </h1>
+        <div class="text-muted">
+            <i class="fas fa-user-tie"></i> {{ current_user.full_name }}
+        </div>
+    </div>
+
+    <!-- Informações da Marina -->
+    {% if marina %}
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card shadow">
+                <div class="card-header bg-primary text-white">
+                    <h5 class="mb-0">
+                        <i class="fas fa-anchor"></i> {{ marina.name }}
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <p><strong>Endereço:</strong> {{ marina.full_address }}</p>
+                            <p><strong>Telefone:</strong> {{ marina.phone or 'Não informado' }}</p>
+                            <p><strong>Email:</strong> {{ marina.email or 'Não informado' }}</p>
+                        </div>
+                        <div class="col-md-6">
+                            <p><strong>Status:</strong>
+                                <span class="badge bg-{{ 'success' if marina.is_active else 'danger' }}">
+                                    {{ 'Ativa' if marina.is_active else 'Inativa' }}
+                                </span>
+                            </p>
+                            <p><strong>Total de Vagas:</strong> {{ marina.total_berths or 0 }}</p>
+                            <p><strong>Vagas Criadas:</strong> {{ marina.max_berths or 0 }}</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- Estatísticas da Marina -->
+    <div class="row mb-4">
+        <div class="col-xl-3 col-md-6 mb-4">
+            <div class="card border-left-primary shadow h-100 py-2">
+                <div class="card-body">
+                    <div class="row no-gutters align-items-center">
+                        <div class="col mr-2">
+                            <div class="text-xs font-weight-bold text-primary text-uppercase mb-1">
+                                Usuários da Marina
+                            </div>
+                            <div class="h5 mb-0 font-weight-bold text-gray-800">{{ stats.total_users }}</div>
+                        </div>
+                        <div class="col-auto">
+                            <i class="fas fa-users fa-2x text-gray-300"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-xl-3 col-md-6 mb-4">
+            <div class="card border-left-success shadow h-100 py-2">
+                <div class="card-body">
+                    <div class="row no-gutters align-items-center">
+                        <div class="col mr-2">
+                            <div class="text-xs font-weight-bold text-success text-uppercase mb-1">
+                                Receita da Marina (R$)
+                            </div>
+                            <div class="h5 mb-0 font-weight-bold text-gray-800">{{ "%.2f"|format(stats.total_revenue) }}
+                            </div>
+                        </div>
+                        <div class="col-auto">
+                            <i class="fas fa-dollar-sign fa-2x text-gray-300"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-xl-3 col-md-6 mb-4">
+            <div class="card border-left-info shadow h-100 py-2">
+                <div class="card-body">
+                    <div class="row no-gutters align-items-center">
+                        <div class="col mr-2">
+                            <div class="text-xs font-weight-bold text-info text-uppercase mb-1">
+                                Assinaturas Ativas
+                            </div>
+                            <div class="h5 mb-0 font-weight-bold text-gray-800">{{ stats.active_subscriptions }}</div>
+                        </div>
+                        <div class="col-auto">
+                            <i class="fas fa-clipboard-list fa-2x text-gray-300"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-xl-3 col-md-6 mb-4">
+            <div class="card border-left-warning shadow h-100 py-2">
+                <div class="card-body">
+                    <div class="row no-gutters align-items-center">
+                        <div class="col mr-2">
+                            <div class="text-xs font-weight-bold text-warning text-uppercase mb-1">
+                                Solicitações Pendentes
+                            </div>
+                            <div class="h5 mb-0 font-weight-bold text-gray-800">{{ stats.pending_requests }}</div>
+                        </div>
+                        <div class="col-auto">
+                            <i class="fas fa-clock fa-2x text-gray-300"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Funcionalidades do Admin de Marina -->
+    <div class="row">
+        <!-- Gestão da Marina -->
+        <div class="col-lg-6 mb-4">
+            <div class="card shadow">
+                <div class="card-header bg-primary text-white">
+                    <h5 class="mb-0">
+                        <i class="fas fa-anchor"></i> Gestão da Marina
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <p class="text-muted">Gerencie as informações e configurações da sua marina.</p>
+                    <div class="d-grid gap-2">
+                        {% if marina %}
+                        <a href="{{ url_for('admin.marina_detail', marina_id=marina.id) }}" class="btn btn-primary">
+                            <i class="fas fa-eye"></i> Ver Detalhes da Marina
+                        </a>
+                        <a href="{{ url_for('admin.marina_edit', marina_id=marina.id) }}"
+                            class="btn btn-outline-primary">
+                            <i class="fas fa-edit"></i> Editar Marina
+                        </a>
+                        <a href="{{ url_for('admin.berth_visualization', marina_id=marina.id) }}"
+                            class="btn btn-outline-primary">
+                            <i class="fas fa-th"></i> Visualizar Vagas
+                        </a>
+                        {% else %}
+                        <p class="text-warning">Nenhuma marina associada ao seu perfil.</p>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Gestão de Vagas -->
+        <div class="col-lg-6 mb-4">
+            <div class="card shadow">
+                <div class="card-header bg-success text-white">
+                    <h5 class="mb-0">
+                        <i class="fas fa-ship"></i> Gestão de Vagas
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <p class="text-muted">Gerencie as vagas da marina.</p>
+                    <div class="d-grid gap-2">
+                        {% if marina %}
+                        <a href="{{ url_for('admin.berth_new') }}?marina_id={{ marina.id }}" class="btn btn-success">
+                            <i class="fas fa-plus"></i> Adicionar Vaga
+                        </a>
+                        <a href="{{ url_for('admin.berths') }}" class="btn btn-outline-success">
+                            <i class="fas fa-list"></i> Ver Todas as Vagas
+                        </a>
+                        {% else %}
+                        <p class="text-warning">Nenhuma marina associada ao seu perfil.</p>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Gestão de Usuários -->
+        <div class="col-lg-6 mb-4">
+            <div class="card shadow">
+                <div class="card-header bg-info text-white">
+                    <h5 class="mb-0">
+                        <i class="fas fa-users"></i> Gestão de Usuários
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <p class="text-muted">Gerencie os usuários da sua marina.</p>
+                    <div class="d-grid gap-2">
+                        <a href="{{ url_for('admin.users') }}" class="btn btn-info">
+                            <i class="fas fa-list"></i> Ver Usuários
+                        </a>
+                        <a href="{{ url_for('admin.user_new') }}" class="btn btn-outline-info">
+                            <i class="fas fa-user-plus"></i> Criar Usuário
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Gestão de Serviços -->
+        <div class="col-lg-6 mb-4">
+            <div class="card shadow">
+                <div class="card-header bg-warning text-dark">
+                    <h5 class="mb-0">
+                        <i class="fas fa-tools"></i> Gestão de Serviços
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <p class="text-muted">Gerencie os serviços oferecidos pela marina.</p>
+                    <div class="d-grid gap-2">
+                        <a href="{{ url_for('admin.services') }}" class="btn btn-warning">
+                            <i class="fas fa-list"></i> Ver Serviços
+                        </a>
+                        <a href="{{ url_for('admin.service_new') }}" class="btn btn-outline-warning">
+                            <i class="fas fa-plus"></i> Criar Serviço
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Solicitações de Serviço -->
+        <div class="col-lg-6 mb-4">
+            <div class="card shadow">
+                <div class="card-header bg-danger text-white">
+                    <h5 class="mb-0">
+                        <i class="fas fa-clipboard-list"></i> Solicitações de Serviço
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <p class="text-muted">Gerencie as solicitações de serviço dos usuários.</p>
+                    <div class="d-grid gap-2">
+                        <a href="{{ url_for('admin.service_requests') }}" class="btn btn-danger">
+                            <i class="fas fa-list"></i> Ver Solicitações
+                        </a>
+                        <a href="#" class="btn btn-outline-danger">
+                            <i class="fas fa-chart-bar"></i> Relatórios
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Assinaturas e Pagamentos -->
+        <div class="col-lg-6 mb-4">
+            <div class="card shadow">
+                <div class="card-header bg-secondary text-white">
+                    <h5 class="mb-0">
+                        <i class="fas fa-credit-card"></i> Assinaturas e Pagamentos
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <p class="text-muted">Gerencie assinaturas e pagamentos da marina.</p>
+                    <div class="d-grid gap-2">
+                        <a href="{{ url_for('admin.subscriptions') }}" class="btn btn-secondary">
+                            <i class="fas fa-list"></i> Ver Assinaturas
+                        </a>
+                        <a href="{{ url_for('admin.payments') }}" class="btn btn-outline-secondary">
+                            <i class="fas fa-credit-card"></i> Ver Pagamentos
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Atividades Recentes -->
+    <div class="row">
+        <div class="col-12">
+            <div class="card shadow">
+                <div class="card-header bg-dark text-white">
+                    <h5 class="mb-0">
+                        <i class="fas fa-clock"></i> Atividades Recentes da Marina
+                    </h5>
+                </div>
+                <div class="card-body">
+                    {% if recent_activities %}
+                    <div class="table-responsive">
+                        <table class="table table-hover">
+                            <thead>
+                                <tr>
+                                    <th>Data/Hora</th>
+                                    <th>Usuário</th>
+                                    <th>Ação</th>
+                                    <th>Detalhes</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for activity in recent_activities %}
+                                <tr>
+                                    <td>{{ activity.created_at.strftime('%d/%m/%Y %H:%M') }}</td>
+                                    <td>{{ activity.user.full_name if activity.user else 'Sistema' }}</td>
+                                    <td>
+                                        <span class="badge bg-{{ activity.get_action_color() }}">
+                                            {{ activity.get_action_display() }}
+                                        </span>
+                                    </td>
+                                    <td>{{ activity.description[:50] }}...</td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                    {% else %}
+                    <p class="text-muted text-center">Nenhuma atividade recente encontrada.</p>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

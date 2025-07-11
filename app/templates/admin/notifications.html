@@ -1,0 +1,203 @@
+{% extends "base.html" %}
+
+{% block title %}Gerenciar Notificações{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h1 class="h3">
+                    <i class="fas fa-bell"></i> Gerenciar Notificações
+                </h1>
+                <div>
+                    <a href="{{ url_for('admin.notification_new') }}" class="btn btn-success me-2">
+                        <i class="fas fa-plus"></i> Nova Notificação
+                    </a>
+                    <a href="{{ url_for('admin.bulk_messages') }}" class="btn btn-info me-2">
+                        <i class="fas fa-envelope"></i> Mensagens em Massa
+                    </a>
+                    <a href="{{ url_for('admin.index') }}" class="btn btn-secondary">
+                        <i class="fas fa-arrow-left"></i> Voltar ao Dashboard
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="card shadow">
+        <div class="card-header py-3">
+            <h6 class="m-0 font-weight-bold text-primary">
+                Notificações do Sistema 
+                <span class="badge badge-info">{{ notifications.total }} registros</span>
+            </h6>
+        </div>
+        <div class="card-body">
+            {% if notifications.items %}
+            <div class="table-responsive">
+                <table class="table table-bordered" width="100%" cellspacing="0">
+                    <thead>
+                        <tr>
+                            <th>Data/Hora</th>
+                            <th>Usuário</th>
+                            <th>Título</th>
+                            <th>Tipo</th>
+                            <th>Status</th>
+                            <th>Criado por</th>
+                            <th>Ações</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for notification in notifications.items %}
+                        <tr>
+                            <td>{{ notification.created_at.strftime('%d/%m/%Y %H:%M') }}</td>
+                            <td>
+                                {% if notification.user %}
+                                <a href="{{ url_for('admin.user_detail', user_id=notification.user.id) }}">
+                                    {{ notification.user.full_name }}
+                                </a>
+                                {% else %}
+                                <span class="text-muted">Usuário removido</span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                <span title="{{ notification.message }}">
+                                    {{ notification.title[:50] }}{% if notification.title|length > 50 %}...{% endif %}
+                                </span>
+                            </td>
+                            <td>
+                                {% if notification.notification_type == 'general' %}
+                                <span class="badge badge-primary">{{ notification.notification_type }}</span>
+                                {% elif notification.notification_type == 'system_message' %}
+                                <span class="badge badge-info">{{ notification.notification_type }}</span>
+                                {% elif notification.notification_type == 'payment_reminder' %}
+                                <span class="badge badge-warning">{{ notification.notification_type }}</span>
+                                {% elif notification.notification_type == 'payment_overdue' %}
+                                <span class="badge badge-danger">{{ notification.notification_type }}</span>
+                                {% else %}
+                                <span class="badge badge-secondary">{{ notification.notification_type }}</span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                {% if notification.is_read %}
+                                <span class="badge badge-success">Lida</span>
+                                {% else %}
+                                <span class="badge badge-warning">Não lida</span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                {% if notification.created_by_user %}
+                                <a href="{{ url_for('admin.user_detail', user_id=notification.created_by_user.id) }}">
+                                    {{ notification.created_by_user.full_name }}
+                                </a>
+                                {% else %}
+                                <span class="text-muted">Sistema</span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                <div class="btn-group" role="group">
+                                    <a href="{{ url_for('admin.notification_detail', notification_id=notification.id) }}" 
+                                       class="btn btn-sm btn-info" title="Ver detalhes">
+                                        <i class="fas fa-eye"></i>
+                                    </a>
+                                    <button type="button" class="btn btn-sm btn-danger" 
+                                            onclick="confirmDelete({{ notification.id }}, '{{ notification.title }}')" 
+                                            title="Excluir">
+                                        <i class="fas fa-trash"></i>
+                                    </button>
+                                </div>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- Paginação -->
+            {% if notifications.pages > 1 %}
+            <nav aria-label="Paginação das notificações">
+                <ul class="pagination justify-content-center">
+                    {% if notifications.has_prev %}
+                    <li class="page-item">
+                        <a class="page-link" href="{{ url_for('admin.notifications', page=notifications.prev_num) }}">
+                            <i class="fas fa-chevron-left"></i> Anterior
+                        </a>
+                    </li>
+                    {% endif %}
+                    
+                    {% for page_num in notifications.iter_pages() %}
+                        {% if page_num %}
+                            {% if page_num != notifications.page %}
+                            <li class="page-item">
+                                <a class="page-link" href="{{ url_for('admin.notifications', page=page_num) }}">
+                                    {{ page_num }}
+                                </a>
+                            </li>
+                            {% else %}
+                            <li class="page-item active">
+                                <span class="page-link">{{ page_num }}</span>
+                            </li>
+                            {% endif %}
+                        {% else %}
+                        <li class="page-item disabled">
+                            <span class="page-link">...</span>
+                        </li>
+                        {% endif %}
+                    {% endfor %}
+                    
+                    {% if notifications.has_next %}
+                    <li class="page-item">
+                        <a class="page-link" href="{{ url_for('admin.notifications', page=notifications.next_num) }}">
+                            Próxima <i class="fas fa-chevron-right"></i>
+                        </a>
+                    </li>
+                    {% endif %}
+                </ul>
+            </nav>
+            {% endif %}
+            
+            {% else %}
+            <div class="text-center py-4">
+                <i class="fas fa-bell fa-3x text-muted mb-3"></i>
+                <p class="text-muted">Nenhuma notificação encontrada.</p>
+                <a href="{{ url_for('admin.notification_new') }}" class="btn btn-primary">
+                    <i class="fas fa-plus"></i> Criar Primeira Notificação
+                </a>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<!-- Modal de confirmação de exclusão -->
+<div class="modal fade" id="deleteModal" tabindex="-1" aria-labelledby="deleteModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="deleteModalLabel">Confirmar Exclusão</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <p>Tem certeza que deseja excluir a notificação <strong id="notificationTitle"></strong>?</p>
+                <p class="text-danger"><small>Esta ação não pode ser desfeita.</small></p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                <form id="deleteForm" method="POST" style="display: inline;">
+                    <button type="submit" class="btn btn-danger">Excluir</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+function confirmDelete(notificationId, notificationTitle) {
+    document.getElementById('notificationTitle').textContent = notificationTitle;
+    document.getElementById('deleteForm').action = `/admin/notifications/${notificationId}/delete`;
+    
+    const modal = new bootstrap.Modal(document.getElementById('deleteModal'));
+    modal.show();
+}
+</script>
+{% endblock %} 
